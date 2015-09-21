@@ -6,10 +6,25 @@
 
   <groupId>io.fuzz</groupId>
   <artifactId>vtx-demo</artifactId>
+  <packaging>pom</packaging>
   <version>1.0.0</version>
+  <modules>
+    <module>vertx-maven-plugin</module>
+    <module>test-vtx-service</module>
+  </modules>
   <properties>
     <vertx.version>3.0.0</vertx.version>
+    <handlebars.version>2.2.2</handlebars.version>
+    <guava.version>18.0</guava.version>
+    <compiler.version>3.1</compiler.version>
+    <logback.version>1.1.2</logback.version>
+    <maven.invoker.version>2.1.1</maven.invoker.version>
+    <rxjava.version>1.0.7</rxjava.version>
+    <rxjava.file.version>0.3.1</rxjava.file.version>
+    <maven.shade.version>2.3</maven.shade.version>
+    <maven.exec.version>1.3.2</maven.exec.version>
   </properties>
+  <dependencyManagement>
   <dependencies>
 
     <dependency>
@@ -23,45 +38,60 @@
       <artifactId>vertx-web</artifactId>
       <version>${vertx.version}</version>
     </dependency>
-  </dependencies>
 
+    <dependency>
+      <groupId>com.google.guava</groupId>
+      <artifactId>guava</artifactId>
+      <version>${guava.version}</version>
+    </dependency>
+
+    <dependency>
+      <groupId>com.github.jknack</groupId>
+      <artifactId>handlebars</artifactId>
+      <version>${handlebars.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>ch.qos.logback</groupId>
+      <artifactId>logback-classic</artifactId>
+      <version>${logback.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.maven.shared</groupId>
+      <artifactId>maven-invoker</artifactId>
+      <version>${maven.invoker.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>io.reactivex</groupId>
+      <artifactId>rxjava</artifactId>
+      <version>${rxjava.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>com.github.davidmoten</groupId>
+      <artifactId>rxjava-file</artifactId>
+      <version>${rxjava.file.version}</version>
+    </dependency>
+  </dependencies>
+  </dependencyManagement>
   <build>
+    <pluginManagement>
       <plugins>
         <!-- We specify the Maven compiler plugin as we need to set it to Java 1.8 -->
         <plugin>
           <artifactId>maven-compiler-plugin</artifactId>
-          <version>3.1</version>
-          <configuration>
-            <source>1.8</source>
-            <target>1.8</target>
-          </configuration>
+          <version>${compiler.version}</version>
         </plugin>
+
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-shade-plugin</artifactId>
-          <version>2.3</version>
-          <executions>
-            <execution>
-              <phase>package</phase>
-              <goals>
-                <goal>shade</goal>
-              </goals>
-              <configuration>
-                <transformers>
-                  <transformer
-                          implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
-                    <manifestEntries>
-                      <Main-Class>App</Main-Class>
-                      <Main-Verticle>App</Main-Verticle>
-                    </manifestEntries>
-                  </transformer>
-                </transformers>
-                <artifactSet/>
-                <outputFile>${project.build.directory}/${project.artifactId}-${project.version}-fat.jar</outputFile>
-              </configuration>
-            </execution>
-          </executions>
+          <version>${maven.shade.version}</version>
+        </plugin>
+        <plugin>
+          <groupId>org.codehaus.mojo</groupId>
+          <artifactId>exec-maven-plugin</artifactId>
+          <version>${maven.exec.version}</version>
         </plugin>
       </plugins>
+    </pluginManagement>
   </build>
 </project>
