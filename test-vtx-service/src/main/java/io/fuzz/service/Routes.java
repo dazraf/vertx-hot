@@ -31,6 +31,7 @@ public class Routes {
         }
       });
     });
+
     router.route().handler(StaticHandler
       .create()
       .setWebRoot("static"));

@@ -14,7 +14,7 @@ import java.util.List;
 public class Compiler {
   private static final Logger logger = LoggerFactory.getLogger(Compiler.class);
 
-  public static Void compile(Path path)  {
+  public static void compile()  {
     InvocationRequest request = new DefaultInvocationRequest();
     request.setPomFile(new File(Utils.getCWD() + "/pom.xml"));
     List<String> goals = new ArrayList<>();
@@ -28,6 +28,5 @@ public class Compiler {
     } catch (MavenInvocationException e) {
       logger.error("Maven invocation exception:", e);
     }
-    return null;
   }
 }

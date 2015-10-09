@@ -1,24 +1,27 @@
 package io.fuzz.vertx.maven;
 
-import java.io.DataInputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.io.*;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.net.URLClassLoader;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.stream.Stream;
 
 public class MavenTargetClassLoader extends URLClassLoader {
+  private static final Logger logger = LoggerFactory.getLogger(MavenTargetClassLoader.class);
 
-  public static ClassLoader create(Void trigger) {
-    return new MavenTargetClassLoader();
-  }
-
-  public MavenTargetClassLoader() {
-    this((URLClassLoader) Thread.currentThread().getContextClassLoader());
+  public static URLClassLoader create(URLClassLoader parentClassLoader) {
+    return new MavenTargetClassLoader(parentClassLoader);
   }
 
   public MavenTargetClassLoader(URLClassLoader urlClassLoader) {
     super(urlClassLoader.getURLs(), urlClassLoader);
   }
+
 
   @Override
   protected Class<?> loadClass(String name, boolean resolve) throws ClassNotFoundException {
@@ -40,6 +43,18 @@ public class MavenTargetClassLoader extends URLClassLoader {
     }
   }
 
+  @Override
+  public URL getResource(String name) {
+    String path = Utils.getCWD() + "/target/classes/" + name;
+    File f = new File(path);
+    try {
+      return f.toURI().toURL();
+    } catch (MalformedURLException e) {
+      logger.error("cannot get resource: " + path);
+      throw new RuntimeException(e);
+    }
+  }
+
   private byte[] loadClassData(String className) throws IOException {
     String cwd = Utils.getCWD();
     File f = new File(cwd + "/target/classes/" + className.replaceAll("\\.", "/") + ".class");
@@ -51,4 +66,5 @@ public class MavenTargetClassLoader extends URLClassLoader {
     dis.close();
     return buff;
   }
+
 }

@@ -8,6 +8,10 @@ import io.vertx.ext.web.RoutingContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.net.URL;
+import java.net.URLClassLoader;
+import java.util.stream.Stream;
+
 public class App extends AbstractVerticle {
   private static final Logger logger = LoggerFactory.getLogger(App.class);
   private HttpServer server;
@@ -15,7 +19,6 @@ public class App extends AbstractVerticle {
   // Convenience method so you can run it in your IDE
   public static void main(String[] args) throws Exception {
     HotDeploy.run("io.fuzz.service.App");
-    // new VertxManager().deploy(App.class);
   }
 
   @Override
