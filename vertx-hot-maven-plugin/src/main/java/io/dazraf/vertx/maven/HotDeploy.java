@@ -1,4 +1,4 @@
-package io.fuzz.vertx.maven;
+package io.dazraf.vertx.maven;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -11,9 +11,10 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.Collectors;
 
 public class HotDeploy {
   private static final Logger logger = LoggerFactory.getLogger(HotDeploy.class);
@@ -21,33 +22,35 @@ public class HotDeploy {
   private final VertxManager vertxManager = new VertxManager();
   private final AtomicReference<Closeable> currentDeployment = new AtomicReference<>();
   private final List<String> classPaths;
+  private final Optional<String> config;
+  private final List<String> sourcePaths;
   private long startTime;
 
-  public static void main(String[] args) throws Exception {
-    run(args[0]);
-  }
-
-  public static void run(String verticleClassName) throws Exception {
+  public static void run(String verticleClassName, List<String> classPaths, Optional<String> config, List<String> sourcePaths
+  ) throws Exception {
     logger.info("Running HOTDEPLOY with {}", verticleClassName);
     logger.info("Current working directory: {}", Utils.getCWD());
-    run(verticleClassName, Collections.emptyList());
+    new HotDeploy(verticleClassName, classPaths, config, sourcePaths).run();
   }
 
-  public static void run(String verticleClassName, List<String> classPaths) throws Exception {
-    logger.info("Running HOTDEPLOY with {}", verticleClassName);
-    logger.info("Current working directory: {}", Utils.getCWD());
-    new HotDeploy(verticleClassName, classPaths).run();
-  }
-
-  private HotDeploy(String clazzName, List<String> classPaths) throws Exception {
+  private HotDeploy(String clazzName, List<String> classPaths, Optional<String> config, List<String> sourcePaths) throws Exception {
     this.verticalClassName = clazzName;
     this.classPaths = classPaths;
+    this.config = config;
+    this.sourcePaths = sourcePaths;
   }
 
   private void run() throws Exception {
     logger.info("Starting up file watchers");
-    Observable<Path> fileWatch = PathWatcher.create(
-      Paths.get(Utils.getCWD(), "src", "main"));
+    Observable<Path> fileWatch = Observable.merge(
+      sourcePaths.stream().map(path -> {
+        try {
+          return PathWatcher.create(Paths.get(path));
+        } catch (Exception e) {
+          logger.error("error in creating path watcher for path: " + path, e);
+          throw new RuntimeException(e);
+        }
+      }).collect(Collectors.toList()));
 
     Subscription subscription = fileWatch.subscribe(this::onFileChangeDetected, this::onError, this::onComplete);
     onFileChangeDetected(null);
@@ -106,7 +109,7 @@ public class HotDeploy {
         return null; // clears the reference to the last deployment
       });
       logger.info("Starting deployment");
-      currentDeployment.compareAndSet(null, vertxManager.deploy(verticalClassName, classPaths));
+      currentDeployment.compareAndSet(null, vertxManager.deploy(verticalClassName, classPaths, config));
       logger.info("Deployment started");
     } catch (Exception e) {
       logger.error("Error in deployment: ", e);

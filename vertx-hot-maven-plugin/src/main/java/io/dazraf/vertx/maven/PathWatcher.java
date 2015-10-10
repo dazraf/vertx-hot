@@ -1,4 +1,4 @@
-package io.fuzz.vertx.maven;
+package io.dazraf.vertx.maven;
 
 import com.darylteo.nio.DirectoryChangedSubscriber;
 import com.darylteo.nio.DirectoryWatcher;
@@ -8,6 +8,7 @@ import org.slf4j.LoggerFactory;
 import rx.Observable;
 import rx.subjects.PublishSubject;
 
+import java.io.File;
 import java.nio.file.Path;
 
 public class PathWatcher {
@@ -22,14 +23,16 @@ public class PathWatcher {
     PublishSubject<Path> subject = PublishSubject.create();
     DirectoryChangedSubscriber directoryChangedSubscriber = new DirectoryChangedSubscriber() {
       @Override
-      public void directoryChanged(DirectoryWatcher directoryWatcher, Path path) {
-        logger.info("[CHANGED]: {}", path);
-        subject.onNext(path);
+      public void directoryChanged(DirectoryWatcher directoryWatcher, Path changedPath) {
+        if (new File(path.toString(), changedPath.toString()).isFile()) {
+          logger.info("[CHANGED]: {}", changedPath);
+          subject.onNext(changedPath);
+        }
       }
     };
     directoryWatcher.subscribe(directoryChangedSubscriber);
     subject.doOnUnsubscribe(() -> {
-      logger.info("... nsubscribing from directory watch");
+      logger.info("... unsubscribing from directory watch");
       directoryWatcher.unsubscribe(directoryChangedSubscriber);
       try {
         factory.close();

@@ -1,4 +1,4 @@
-package io.fuzz.vertx.maven;
+package io.dazraf.vertx.maven;
 
 
 import org.apache.maven.shared.invoker.*;
@@ -6,7 +6,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
-import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -23,7 +22,10 @@ public class Compiler {
     try {
       InvocationResult result = new DefaultInvoker().execute(request);
       if (result.getExitCode() != 0) {
-        logger.info("Exit code {}", result.getExitCode());
+        logger.error("Error with exit code {}", result.getExitCode());
+      }
+      if (result.getExecutionException() != null) {
+        logger.error("Error exit code: " + result.getExitCode(), result.getExecutionException());
       }
     } catch (MavenInvocationException e) {
       logger.error("Maven invocation exception:", e);

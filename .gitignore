@@ -1,4 +1,4 @@
 **/.vertx
-target
-*.iml
-.idea
+**/target
+**/*.iml
+**/.idea

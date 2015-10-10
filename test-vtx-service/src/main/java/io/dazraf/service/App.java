@@ -1,16 +1,12 @@
-package io.fuzz.service;
+package io.dazraf.service;
 
-import io.fuzz.vertx.maven.HotDeploy;
 import io.vertx.core.AbstractVerticle;
+import io.vertx.core.Vertx;
 import io.vertx.core.http.HttpServer;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.net.URL;
-import java.net.URLClassLoader;
-import java.util.stream.Stream;
 
 public class App extends AbstractVerticle {
   private static final Logger logger = LoggerFactory.getLogger(App.class);
@@ -18,7 +14,8 @@ public class App extends AbstractVerticle {
 
   // Convenience method so you can run it in your IDE
   public static void main(String[] args) throws Exception {
-    HotDeploy.run("io.fuzz.service.App");
+    Vertx vertx = Vertx.vertx();
+    vertx.deployVerticle(App.class.getCanonicalName());
   }
 
   @Override
@@ -27,7 +24,7 @@ public class App extends AbstractVerticle {
     logger.info("Starting server on port {}", port);
     Router router = Routes.create(vertx, this);
     this.server  = vertx.createHttpServer().requestHandler(router::accept).listen(port);
-    System.out.println("Server is started");
+    logger.info("Server is started on port {}", port);
   }
 
   @Override
@@ -38,6 +35,12 @@ public class App extends AbstractVerticle {
   }
 
   public void test(RoutingContext context) {
-    context.response().end("<html><body><h2>Description</h2>this is a simple result that tells the story</body></html>");
+    context.response().end(
+      "<html>" +
+        "<body>" +
+          "<h2>Description</h2>" +
+          "This is a simple result that tells the story" +
+        "</body>" +
+      "</html>");
   }
 }

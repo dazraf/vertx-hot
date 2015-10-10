@@ -1,4 +1,4 @@
-package io.fuzz.service;
+package io.dazraf.service;
 
 import io.vertx.core.Vertx;
 import io.vertx.ext.web.Router;

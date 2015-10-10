@@ -3,7 +3,7 @@
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <parent>
-        <groupId>io.fuzz</groupId>
+        <groupId>io.dazraf</groupId>
         <artifactId>vtx-demo</artifactId>
         <version>1.0.0</version>
     </parent>
@@ -38,8 +38,8 @@
             <artifactId>logback-classic</artifactId>
         </dependency>
         <dependency>
-            <groupId>io.fuzz</groupId>
-            <artifactId>vertx-maven-plugin</artifactId>
+            <groupId>io.dazraf</groupId>
+            <artifactId>vertx-hot-maven-plugin</artifactId>
             <version>${project.parent.version}</version>
         </dependency>
     </dependencies>
@@ -55,11 +55,12 @@
             </plugin>
 
             <plugin>
-                <groupId>io.fuzz</groupId>
-                <artifactId>vertx-maven-plugin</artifactId>
+                <groupId>io.dazraf</groupId>
+                <artifactId>vertx-hot-maven-plugin</artifactId>
                 <version>${project.parent.version}</version>
                 <configuration>
-                    <verticleClassName>io.fuzz.service.App</verticleClassName>
+                    <verticleClassName>io.dazraf.service.App</verticleClassName>
+                    <config>conf.json</config>
                 </configuration>
             </plugin>
 
@@ -77,8 +78,8 @@
                                 <transformer
                                         implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
                                     <manifestEntries>
-                                        <Main-Class>io.fuzz.service.App</Main-Class>
-                                        <Main-Verticle>io.fuzz.service.App</Main-Verticle>
+                                        <Main-Class>io.dazraf.service.App</Main-Class>
+                                        <Main-Verticle>io.dazraf.service.App</Main-Verticle>
                                     </manifestEntries>
                                 </transformer>
                             </transformers>
@@ -99,9 +100,9 @@
                     </execution>
                 </executions>
                 <configuration>
-                    <mainClass>io.fuzz.vertx.maven.HotDeploy</mainClass>
+                    <mainClass>io.dazraf.vertx.maven.HotDeploy</mainClass>
                     <arguments>
-                        <argument>io.fuzz.service.App</argument>
+                        <argument>io.dazraf.service.App</argument>
                     </arguments>
                 </configuration>
             </plugin>

@@ -1,10 +1,6 @@
-package io.fuzz.vertx.maven.plugin.mojo;
+package io.dazraf.vertx.maven.plugin.mojo;
 
-import com.google.common.collect.Collections2;
-import com.google.common.collect.Lists;
-import com.google.common.collect.Sets;
-import io.fuzz.vertx.maven.HotDeploy;
-import org.apache.commons.collections4.MapUtils;
+import io.dazraf.vertx.maven.HotDeploy;
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
@@ -16,27 +12,24 @@ import org.apache.maven.plugins.annotations.ResolutionScope;
 import org.apache.maven.project.MavenProject;
 
 import java.io.File;
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.net.URLClassLoader;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
+import static java.util.Optional.ofNullable;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Stream.of;
 
-@Mojo(name = "run",
+@Mojo(name = "hot",
   requiresProject = true,
   threadSafe = true,
   requiresDependencyResolution = ResolutionScope.COMPILE_PLUS_RUNTIME,
   requiresDependencyCollection = ResolutionScope.COMPILE_PLUS_RUNTIME)
-public class VertxRunMojo extends AbstractMojo {
+public class VertxHotDeploy extends AbstractMojo {
   @Parameter(property = "verticleClass")
   private String verticleClassName = "";
+
+  @Parameter(property = "config")
+  private String config = null;
 
   /**
    * The enclosing project.
@@ -49,13 +42,12 @@ public class VertxRunMojo extends AbstractMojo {
     Log log = getLog();
     try {
       List<String> classPath = computeClasspath();
-      HotDeploy.run(verticleClassName, classPath);
+      HotDeploy.run(verticleClassName, classPath, ofNullable(config), project.getCompileSourceRoots());
     } catch (Exception e) {
       log.error(e);
       throw new MojoExecutionException("failed to startup hot redeploy", e);
     }
   }
-
 
   /**
    * Compute the classpath from the specified Classpath. The computed classpath is based on the classpathScope. The
@@ -98,16 +90,6 @@ public class VertxRunMojo extends AbstractMojo {
     theClasspathFiles.add(new File(project.getBuild().getOutputDirectory()));
     getLog().debug("Collected project artifacts " + artifacts);
     getLog().debug("Collected project classpath " + theClasspathFiles);
-  }
-
-  private void dumpClasspath(String contextName, ClassLoader classLoader) {
-    if (classLoader instanceof URLClassLoader) {
-      URLClassLoader urlClassLoader = (URLClassLoader)classLoader;
-      System.out.println("ClassLoader '" + contextName + "' paths");
-      of(urlClassLoader.getURLs()).forEach(System.out::println);
-    } else {
-      getLog().info("classloader is not a URL classloader");
-    }
   }
 
 }

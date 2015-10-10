@@ -16,7 +16,7 @@ and opinionated framework.
     * Vertx - if you so wish to install the ```vertx``` runner.
     * All with hot reloading of web artifacts
 * HTTP Server
-* io.fuzz.service.Routes
+* Routes
 * Static file server
 * Server side web page rendering using a number of template engines
 * REST API definition
