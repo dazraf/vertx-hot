@@ -11,6 +11,7 @@ import org.slf4j.LoggerFactory;
 public class App extends AbstractVerticle {
   private static final Logger logger = LoggerFactory.getLogger(App.class);
   private HttpServer server;
+  private boolean flag = true;
 
   // Convenience method so you can run it in your IDE
   public static void main(String[] args) throws Exception {
@@ -23,7 +24,7 @@ public class App extends AbstractVerticle {
     int port = config().getInteger("port", 8080);
     logger.info("Starting server on port {}", port);
     Router router = Routes.create(vertx, this);
-    this.server  = vertx.createHttpServer().requestHandler(router::accept).listen(port);
+    this.server = vertx.createHttpServer().requestHandler(router::accept).listen(port);
     logger.info("Server is started on port {}", port);
   }
 
@@ -35,12 +36,23 @@ public class App extends AbstractVerticle {
   }
 
   public void test(RoutingContext context) {
-    context.response().end(
-      "<html>" +
-        "<body>" +
+    if (!flag) {
+      context.response().end(
+        "<html>" +
+          "<body>" +
           "<h2>Description</h2>" +
           "This is a simple result that tells the story" +
-        "</body>" +
-      "</html>");
+          "</body>" +
+          "</html>");
+    } else {
+      context.response().end(
+        "<html>" +
+          "<body>" +
+          "<h2>Description</h2>" +
+          "This is another story" +
+          "</body>" +
+          "</html>");
+    }
+    flag = !flag;
   }
 }

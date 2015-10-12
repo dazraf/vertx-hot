@@ -2,6 +2,7 @@ package io.dazraf.vertx.maven.plugin.mojo;
 
 import io.dazraf.vertx.maven.HotDeploy;
 import org.apache.maven.artifact.Artifact;
+import org.apache.maven.model.Resource;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
@@ -14,10 +15,11 @@ import org.apache.maven.project.MavenProject;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static java.util.Optional.ofNullable;
 import static java.util.stream.Collectors.toList;
-import static java.util.stream.Stream.of;
 
 @Mojo(name = "hot",
   requiresProject = true,
@@ -28,8 +30,8 @@ public class VertxHotDeploy extends AbstractMojo {
   @Parameter(property = "verticleClass")
   private String verticleClassName = "";
 
-  @Parameter(property = "config")
-  private String config = null;
+  @Parameter(property = "configFile")
+  private String configFile = null;
 
   /**
    * The enclosing project.
@@ -42,7 +44,11 @@ public class VertxHotDeploy extends AbstractMojo {
     Log log = getLog();
     try {
       List<String> classPath = computeClasspath();
-      HotDeploy.run(verticleClassName, classPath, ofNullable(config), project.getCompileSourceRoots());
+      List<String> watchedPaths = Stream.concat(
+        project.getCompileSourceRoots().stream(),
+        project.getResources().stream().map(Resource::getDirectory)
+      ).collect(Collectors.toList());
+      HotDeploy.run(verticleClassName, classPath, ofNullable(configFile), watchedPaths);
     } catch (Exception e) {
       log.error(e);
       throw new MojoExecutionException("failed to startup hot redeploy", e);

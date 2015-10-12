@@ -1,24 +1,77 @@
-# Demo web app with Vertx
+# Vertx-Hot
+### A Maven plugin for hot re-deploy of Maven Vert.x applications
+---
+## 1. Background
 
-## Background
-This demo puts together various capabilities with the [vert.x](vertx.io) framework.
-The framework is very flexible - which means that when the time comes, 
-you can adapt easily without being constrained within a prescriptive 
-and opinionated framework.
+I wrote this plugin because, first and foremost, I love using [Vert.x](http://vertx.io) - it has feature-rich and elegant APIs and outstanding performance. Secondly, I wanted the rapid development model that I've experienced
+with frameworks like [Play](https://www.playframework.com/) but, notably, in a traditional *Maven project*.
 
-## Summary of the Demo
+I use this plugin for my own workflow, and I'm sharing it in case anyone else finds it useful. Contributions most gratefully received and recognised.
+ 
+## 2. Aims
 
-* A standard maven application
-* Executable from:
-    * IDE - run a main function
-    * Maven - run with exec
-    * Java - using the built fat jar
-    * Vertx - if you so wish to install the ```vertx``` runner.
-    * All with hot reloading of web artifacts
-* HTTP Server
-* Routes
-* Static file server
-* Server side web page rendering using a number of template engines
-* REST API definition
-* Rich HTML 5 app with 
-* Use of Browserify + NPM for typical web app development
+1. Simple integration with Maven.
+2. Leverage the maven project definition to correctly identify files that needed rebuilding.
+3. Exercise rebuilding all maven outputs in the ```compile``` phase. This includes generated source, resources, objects etc.
+4. Much faster iteration cycle than the manual processes carried out within the IDE.
+5. __Full Debug__ capability without needing to attach to secondary processes.
+
+## 3. Instructions
+Four simple steps: *Download*, *Add*, *Run* and *Stop*.
+
+### 3.1. Download
+Until I upload to maven central, clone this project locally and run ```mvn install```.
+
+### 3.2. Add to your project
+Add the following to your project ```pom.xml```:
+
+```xml
+<plugin>
+    <groupId>io.dazraf</groupId>
+    <artifactId>vertx-hot-maven-plugin</artifactId>
+    <version>1.0.0</version>
+    <configuration>
+        <verticleClassName>io.dazraf.service.App</verticleClassName>
+        <configFile>conf.json</configFile>
+    </configuration>
+</plugin>
+```
+
+The ```configuration``` has just two parameters:
+
+* ```verticleClassName``` - the fully qualified class name of your master verticle.
+* ```configFile``` - the location of the config file *e.g.* if the config file is in the project ```resources``` root directory as ```config.json``` then ```<configFile>config.json<configFile>```.  
+
+### 3.3. Run it
+
+You can run it either on the command line with:
+
+``` 
+mvn vertx:hot
+```
+
+Or, in your favourite IDE. In IntelliJ IDEA, I open the Maven side-bar, *expand* the ```Plugins/vertx``` section and 
+*double-click* on ```vertx:hot``` goal.
+
+If I want to debug, then similar to above, I *right-click* on ```vertx:hot``` goal and *select* ```Debug```.
+
+### 3.4. Stopping the plugin
+
+Press either: ```<Enter>``` or  ```Ctrl-C```.
+
+## 4. Sample code
+There is a simple test project under ```test-vtx-service```.
+
+## 5. Design
+
+```io.dazraf.vertx.maven.plugin.mojo.VertxHotDeploy#execute``` is the entry point. 
+This collects the maven project setting paths and the classpaths for all dependencies and defers to
+ ```io.dazraf.vertx.maven.HotDeploy``` for execution. 
+ 
+```HotDeploy``` creates a file watcher on all project paths (sources, resources etc), buffers in chunks to avoid 
+excessive rebuilds and defers to a build pipeline in ```HotDeploy#onFileChangeDetected```. This in turn calls the compiler, 
+```io.dazraf.vertx.maven.Compiler``` to compile with the maven invoker library and then to ```io.dazraf.vertx.maven.VertxManager``` to create a 
+```Closeable``` vert.x instance with the configured verticle and configFile.
+
+```VertxManager``` creates a new ```ClassLoader``` on the classpaths specified by the project, loads vert.x and deploys the verticle.
+The returned ```Closeable```, on invocation, will tear down the vert.x instance.

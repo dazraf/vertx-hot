@@ -2,31 +2,20 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <artifactId>vertx-hot-maven-plugin</artifactId>
     <parent>
         <groupId>io.dazraf</groupId>
-        <artifactId>vtx-demo</artifactId>
+        <artifactId>vertx-hot</artifactId>
         <version>1.0.0</version>
     </parent>
-    <modelVersion>4.0.0</modelVersion>
-
-    <artifactId>vertx-hot-maven-plugin</artifactId>
-    <version>1.0.0</version>
     <packaging>maven-plugin</packaging>
+
     <dependencies>
         <dependency>
             <groupId>io.vertx</groupId>
             <artifactId>vertx-core</artifactId>
-            <version>${vertx.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>io.vertx</groupId>
-            <artifactId>vertx-web</artifactId>
-            <version>${vertx.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>com.google.guava</groupId>
-            <artifactId>guava</artifactId>
-            <version>${guava.version}</version>
+            <version>3.1.0</version>
         </dependency>
         <dependency>
             <groupId>ch.qos.logback</groupId>

@@ -10,6 +10,7 @@ import rx.subjects.PublishSubject;
 
 import java.io.File;
 import java.nio.file.Path;
+import java.util.List;
 
 public class PathWatcher {
   private final static Logger logger = LoggerFactory.getLogger(PathWatcher.class);
@@ -24,10 +25,8 @@ public class PathWatcher {
     DirectoryChangedSubscriber directoryChangedSubscriber = new DirectoryChangedSubscriber() {
       @Override
       public void directoryChanged(DirectoryWatcher directoryWatcher, Path changedPath) {
-        if (new File(path.toString(), changedPath.toString()).isFile()) {
-          logger.info("[CHANGED]: {}", changedPath);
-          subject.onNext(changedPath);
-        }
+        logger.info("[CHANGED]: {}", changedPath);
+        subject.onNext(changedPath);
       }
     };
     directoryWatcher.subscribe(directoryChangedSubscriber);

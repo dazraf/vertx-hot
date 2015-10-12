@@ -32,8 +32,14 @@ public class Routes {
       });
     });
 
+    router.route("/components/*")
+      .handler(StaticHandler
+        .create()
+        .setWebRoot("bower_components"));
+
     router.route().handler(StaticHandler
       .create()
+      .setCachingEnabled(false)
       .setWebRoot("static"));
 
     return router;

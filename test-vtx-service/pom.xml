@@ -2,45 +2,57 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-    <parent>
-        <groupId>io.dazraf</groupId>
-        <artifactId>vtx-demo</artifactId>
-        <version>1.0.0</version>
-    </parent>
     <modelVersion>4.0.0</modelVersion>
 
     <artifactId>test-vtx-service</artifactId>
-    <version>1.0.0</version>
+    <parent>
+        <groupId>io.dazraf</groupId>
+        <artifactId>vertx-hot</artifactId>
+        <version>1.0.0</version>
+    </parent>
 
     <dependencies>
 
         <dependency>
             <groupId>io.vertx</groupId>
             <artifactId>vertx-core</artifactId>
+            <version>3.1.0</version>
         </dependency>
 
         <dependency>
             <groupId>io.vertx</groupId>
             <artifactId>vertx-web</artifactId>
+            <version>3.1.0</version>
+        </dependency>
+
+        <dependency>
+            <groupId>io.vertx</groupId>
+            <artifactId>vertx-web-templ-handlebars</artifactId>
+            <version>3.1.0</version>
         </dependency>
 
         <dependency>
             <groupId>com.google.guava</groupId>
             <artifactId>guava</artifactId>
+            <version>18.0</version>
         </dependency>
 
         <dependency>
             <groupId>com.github.jknack</groupId>
             <artifactId>handlebars</artifactId>
+            <version>2.2.2</version>
         </dependency>
+
         <dependency>
             <groupId>ch.qos.logback</groupId>
             <artifactId>logback-classic</artifactId>
+            <version>1.1.3</version>
         </dependency>
+
         <dependency>
             <groupId>io.dazraf</groupId>
             <artifactId>vertx-hot-maven-plugin</artifactId>
-            <version>${project.parent.version}</version>
+            <version>1.0.0</version>
         </dependency>
     </dependencies>
     <build>
@@ -57,10 +69,10 @@
             <plugin>
                 <groupId>io.dazraf</groupId>
                 <artifactId>vertx-hot-maven-plugin</artifactId>
-                <version>${project.parent.version}</version>
+                <version>1.0.0</version>
                 <configuration>
                     <verticleClassName>io.dazraf.service.App</verticleClassName>
-                    <config>conf.json</config>
+                    <configFile>conf.json</configFile>
                 </configuration>
             </plugin>
 

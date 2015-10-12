@@ -13,6 +13,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
@@ -52,14 +53,17 @@ public class HotDeploy {
         }
       }).collect(Collectors.toList()));
 
-    Subscription subscription = fileWatch.subscribe(this::onFileChangeDetected, this::onError, this::onComplete);
+    Subscription subscription = fileWatch.buffer(1, TimeUnit.SECONDS).subscribe(
+      this::onFileChangeDetected,
+      this::onError,
+      this::onComplete);
     onFileChangeDetected(null);
     printLastMessage();
     new BufferedReader(new InputStreamReader(System.in)).readLine();
-    logger.info("Unsubscribing from pipeline");
+    logger.info("shutting down ...");
     subscription.unsubscribe();
-    logger.info("close vert.x");
     vertxManager.close();
+    logger.info("done");
     System.exit(0);
   }
 
@@ -75,15 +79,20 @@ public class HotDeploy {
     logger.error("Error during hot deploy", throwable);
   }
 
-  private void onFileChangeDetected(Path path) {
-    markFileDetected(path);
-    Compiler.compile();
-    loadApp(classPaths);
-    markRedeployed();
+  private void onFileChangeDetected(List<Path> paths) {
+    if (paths == null || paths.size() > 0) {
+      markFileDetected(Optional.ofNullable(paths));
+      Compiler.compile();
+      loadApp(classPaths);
+      markRedeployed();
+    }
   }
 
-  private void markFileDetected(Path path) {
-    logger.info("file change detected: {}", path);
+  private void markFileDetected(Optional<List<Path>> paths) {
+    if (paths.isPresent()) {
+      logger.info("file change detected:");
+      paths.get().stream().forEach(path -> logger.info(path.toString()));
+    }
     this.startTime = System.nanoTime();
   }
 

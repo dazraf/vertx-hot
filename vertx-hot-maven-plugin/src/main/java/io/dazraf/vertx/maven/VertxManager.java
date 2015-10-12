@@ -1,7 +1,5 @@
 package io.dazraf.vertx.maven;
 
-import com.google.common.base.Charsets;
-import com.google.common.io.Resources;
 import io.vertx.core.DeploymentOptions;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonObject;
@@ -11,18 +9,21 @@ import org.slf4j.LoggerFactory;
 import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.List;
 import java.util.Optional;
+import java.util.Scanner;
 import java.util.concurrent.CountDownLatch;
 
 import static io.dazraf.vertx.maven.Utils.*;
 
 public class VertxManager implements Closeable {
   private static final Logger logger = LoggerFactory.getLogger(VertxManager.class);
+
   static {
     // We set this property to prevent Vert.x caching files loaded from the classpath on disk
     // This means if you edit the static files in your IDE then the next time they are served the new ones will
@@ -82,18 +83,20 @@ public class VertxManager implements Closeable {
       try {
         // bind the new class loader to this thread
         Thread.currentThread().setContextClassLoader(urlClassLoader);
+        System.setProperty("vertx.disableFileCaching", "true");
 
         Class<Vertx> vertxClass = loadClassFromContextClassLoader(Vertx.class);
         Object vertx = createVertx(vertxClass);
 
         if (config.isPresent()) {
-          deployVerticleWithConfig(verticleClassName, urlClassLoader, vertxClass, vertx);
+          deployVerticleWithConfig(verticleClassName, urlClassLoader, vertxClass, vertx, config.get());
         } else {
           deployVerticleWithNoConfig(verticleClassName, vertxClass, vertx);
         }
         logger.info("verticle deployed");
         latch.await();
         closeVertx(vertxClass, vertx);
+        // potential ClassLoader leak here. Need to find a nice way of invoking vertx.close(handler) and synchronising
       } catch (Exception e) {
         logger.error("Error starting verticle", e);
         throw new RuntimeException(e);
@@ -114,25 +117,27 @@ public class VertxManager implements Closeable {
     deployVerticle.invoke(vertx, verticleClassName);
   }
 
-  private void deployVerticleWithConfig(String verticleClassName, URLClassLoader urlClassLoader, Class<Vertx> vertxClass, Object vertx) throws Exception {
+  private void deployVerticleWithConfig(String verticleClassName, URLClassLoader urlClassLoader, Class<Vertx> vertxClass, Object vertx, String configFile) throws Exception {
     Class<DeploymentOptions> deploymentOptionsClass = loadClassFromContextClassLoader(DeploymentOptions.class);
     Object deploymentOptions = deploymentOptionsClass.newInstance();
 
-    Object jsonConfig = loadConfig(urlClassLoader);
+    Object jsonConfig = loadConfig(urlClassLoader, configFile);
     getDeploymentOptionsSetConfigMethod(deploymentOptionsClass).invoke(deploymentOptions, jsonConfig);
     Method deployVerticle = getDeployVerticleMethodWithOptions(vertxClass, deploymentOptionsClass);
     deployVerticle.invoke(vertx, verticleClassName, deploymentOptions);
   }
 
-  private Object loadConfig(ClassLoader classLoader) throws Exception {
-    URL resource = classLoader.getResource("conf.json");
+  private Object loadConfig(ClassLoader classLoader, String configFile) throws Exception {
+    URL resource = classLoader.getResource(configFile);
     if (resource == null) {
-      logger.error("Failed to load config file");
-      throw new IOException("Failed to load config file");
+      logger.error("Failed to load config file: {}", configFile);
+      throw new IOException("Failed to load config file: " + configFile);
     }
-    String config = Resources.toString(resource, Charsets.UTF_8);
-    return loadClassFromContextClassLoader(JsonObject.class)
-      .getConstructor(String.class)
-      .newInstance(config);
+    try (InputStream resourceAsStream = classLoader.getResourceAsStream(configFile)) {
+      String config = new Scanner(resourceAsStream, "UTF-8").useDelimiter("\\A").next();
+      return loadClassFromContextClassLoader(JsonObject.class)
+        .getConstructor(String.class)
+        .newInstance(config);
+    }
   }
 }
