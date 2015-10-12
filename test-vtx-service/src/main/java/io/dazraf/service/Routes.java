@@ -5,6 +5,9 @@ import io.vertx.ext.web.Router;
 import io.vertx.ext.web.handler.StaticHandler;
 import io.vertx.ext.web.templ.HandlebarsTemplateEngine;
 
+import java.net.InetAddress;
+import java.net.UnknownHostException;
+
 /**
  * I've created this class to specify routes
  * Vertx is not opinionated about structure
@@ -22,6 +25,11 @@ public class Routes {
     HandlebarsTemplateEngine engine = HandlebarsTemplateEngine.create();
     engine.setMaxCacheSize(0);
     router.get("/dynamic/:name").handler(ctx -> {
+      try {
+        ctx.put("dodgyhostname", InetAddress.getLocalHost().getHostName());
+      } catch (UnknownHostException e) {
+        ctx.put("dodgyhostname", e.getMessage());
+      }
       String name = ctx.request().getParam("name");
       engine.render(ctx, "templates/" + name + ".hbs", res -> {
         if (res.succeeded()) {

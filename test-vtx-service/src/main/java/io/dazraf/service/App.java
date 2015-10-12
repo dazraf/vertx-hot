@@ -11,7 +11,7 @@ import org.slf4j.LoggerFactory;
 public class App extends AbstractVerticle {
   private static final Logger logger = LoggerFactory.getLogger(App.class);
   private HttpServer server;
-  private boolean flag = true;
+  private boolean flag = false;
 
   // Convenience method so you can run it in your IDE
   public static void main(String[] args) throws Exception {
