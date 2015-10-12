@@ -53,7 +53,7 @@ mvn vertx:hot
 Or, in your favourite IDE. In IntelliJ IDEA, I open the Maven side-bar, *expand* the ```Plugins/vertx``` section and 
 *double-click* on ```vertx:hot``` goal.
 
-If I want to debug, then similar to above, I *right-click* on ```vertx:hot``` goal and *select* ```Debug```.
+If I want to debug, then similar to above, I *right-click* on the ```vertx:hot``` goal and *select* ```Debug```.
 
 ### 3.4. Stopping the plugin
 
@@ -65,7 +65,7 @@ There is a simple test project under ```test-vtx-service```.
 ## 5. Design
 
 ```io.dazraf.vertx.maven.plugin.mojo.VertxHotDeploy#execute``` is the entry point. 
-This collects the maven project setting paths and the classpaths for all dependencies and defers to
+This collects the maven project paths, together with the classpaths for all dependencies, and defers to
  ```io.dazraf.vertx.maven.HotDeploy``` for execution. 
  
 ```HotDeploy``` creates a file watcher on all project paths (sources, resources etc), buffers in chunks to avoid 
