@@ -1,12 +1,18 @@
 package io.dazraf.service;
 
 import io.vertx.core.AbstractVerticle;
+import io.vertx.core.DeploymentOptions;
 import io.vertx.core.Vertx;
 import io.vertx.core.http.HttpServer;
+import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.Scanner;
 
 public class App extends AbstractVerticle {
   private static final Logger logger = LoggerFactory.getLogger(App.class);
@@ -16,7 +22,17 @@ public class App extends AbstractVerticle {
   // Convenience method so you can run it in your IDE
   public static void main(String[] args) throws Exception {
     Vertx vertx = Vertx.vertx();
-    vertx.deployVerticle(App.class.getCanonicalName());
+    vertx.deployVerticle(App.class.getCanonicalName(), new DeploymentOptions().setConfig(loadConfig()));
+  }
+
+  private static JsonObject loadConfig() throws IOException {
+    JsonObject config;
+    try (InputStream resourceAsStream = Thread.currentThread().getContextClassLoader().getResourceAsStream("config.json")) {
+      try (Scanner scanner = new Scanner(resourceAsStream)) {
+        config = new JsonObject(scanner.useDelimiter("\\A").next());
+      }
+    }
+    return config;
   }
 
   @Override
