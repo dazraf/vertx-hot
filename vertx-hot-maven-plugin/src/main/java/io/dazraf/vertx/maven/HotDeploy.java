@@ -102,16 +102,16 @@ public class HotDeploy {
 
   private void markRedeployed() {
     long nanos = System.nanoTime() - startTime;
-    logger.info("compiled and redeployed in {}s", nanos * 1E-9);
+    logger.info("Compiled and redeployed in {}s", nanos * 1E-9);
   }
 
   @SuppressWarnings("unchecked")
   private void loadApp(List<String> classPaths) {
-    logger.info("Shutting down existing deployment");
     try {
       currentDeployment.getAndUpdate(c -> {
         if (c != null) {
           try {
+            logger.info("Shutting down existing deployment");
             c.close();
             logger.info("Deployment shutdown");
           } catch (IOException e) {
