@@ -3,7 +3,7 @@
 ---
 ## Background
 
-This plugin was developed to make development of [Vert.x](http://vertx.io) Verticles in Maven easier. 
+This plugin's purpose is to make development of [Vert.x](http://vertx.io) Verticles in Maven easier.
 
 I'm sharing it in case you find it useful also. 
 
@@ -54,12 +54,9 @@ mvn vertx:hot
 Or, in your favourite IDE: 
 
 * __IntelliJ IDEA__: 
-*  open the Maven side-bar, *expand* the ```Plugins/vertx``` section and *double-click* on ```vertx:hot``` goal. Any changes to your project's main source (*e.g.* ```src/main```) will cause a hot deploy. To __Debug__ *right-click* on the ```vertx:hot``` goal and *select* ```Debug```.
+  * *Run* - open the Maven side-bar, *expand* the ```Plugins/vertx``` section and *double-click* on ```vertx:hot``` goal. Any changes to your project's main source (*e.g.* ```src/main```) will cause a hot deploy. 
+  * *Debug* - *right-click* on the ```vertx:hot``` goal and *select* ```Debug```.
 * __Eclipse__: *This plugin has not been tested in Eclipse as yet.*
-
-
-
-
 
 ### Step 4: Stopping the plugin
 
