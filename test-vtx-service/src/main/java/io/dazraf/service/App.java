@@ -34,7 +34,7 @@ public class App extends AbstractVerticle {
     Router router = Routes.create(vertx, this);
     this.server = vertx.createHttpServer().requestHandler(router::accept).listen(port);
     logger.info("Server is started on port {}", port);
-    logger.info("Browse to: http://localhost:8888");
+    logger.info("Browse to: http://localhost:{}", port);
   }
 
   @Override
