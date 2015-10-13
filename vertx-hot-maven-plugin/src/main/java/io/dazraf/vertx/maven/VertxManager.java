@@ -10,19 +10,22 @@ import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
+import java.net.MalformedURLException;
+import java.net.URI;
 import java.net.URL;
 import java.net.URLClassLoader;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.Scanner;
 import java.util.concurrent.CountDownLatch;
-
-import static io.dazraf.vertx.maven.Utils.*;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicReference;
 
 public class VertxManager implements Closeable {
   private static final Logger logger = LoggerFactory.getLogger(VertxManager.class);
+  private final Vertx vertx = Vertx.vertx();
+  private AtomicLong nextIsolationGroup = new AtomicLong(1);
 
   static {
     // We set this property to prevent Vert.x caching files loaded from the classpath on disk
@@ -33,111 +36,63 @@ public class VertxManager implements Closeable {
   }
 
   public void close() {
+    CountDownLatch latch = new CountDownLatch(1);
+    vertx.close(ar -> {
+      if (ar.failed()) {
+        logger.error("error during shutting down vertx", ar.cause());
+      }
+      latch.countDown();
+    });
+    try {
+      latch.await();
+    } catch (InterruptedException e) {
+      logger.error("error during shutting down vertx", e);
+    }
   }
 
-  public Closeable deploy(String verticleClassName, List<String> classPaths, Optional<String> config) {
-    final CountDownLatch latch = new CountDownLatch(1);
-
-    final Thread thread = new Thread(
-      createRunnable(classPaths, verticleClassName, config, latch));
-
-    thread.start();
-
-    return () -> {
+  public Closeable deploy(String verticleClassName, List<String> classPaths, Optional<String> config) throws Exception {
+    DeploymentOptions deploymentOptions = new DeploymentOptions()
+      .setExtraClasspath(classPaths)
+      .setIsolationGroup(Long.toString(nextIsolationGroup.getAndIncrement()))
+      .setIsolatedClasses(Arrays.asList("*"));
+    if (config.isPresent()) {
+      JsonObject jsonConfig = loadConfig(classPaths, config.get());
+      deploymentOptions.setConfig(jsonConfig);
+    }
+    AtomicReference<String> verticleId = new AtomicReference<>();
+    CountDownLatch latch = new CountDownLatch(1);
+    vertx.deployVerticle(verticleClassName, deploymentOptions, ar -> {
+      verticleId.set(ar.result());
       latch.countDown();
+    });
+    latch.await();
+    return () -> {
+      CountDownLatch closeLatch = new CountDownLatch(1);
+      vertx.undeploy(verticleId.get(), ar -> closeLatch.countDown());
       try {
-        thread.join();
+        closeLatch.await();
       } catch (InterruptedException e) {
-        throw new RuntimeException(e);
+        logger.error("on closing verticle", e);
       }
     };
   }
 
-  /**
-   * Return a runnable that when executed:
-   * - replaces the thread context's class loader with the executables classpath
-   * - starts vertx
-   * - deploys the request verticle, with the specific config file
-   * - waits until signalled
-   * - tears down the vertx instance
-   *
-   * @param classPaths the list of paths for the executable
-   * @param verticleClassName the name of the main verticle
-   * @param config optional config file name
-   * @param latch reaches zero when its time to close the vertx instance
-   * @return
-   */
-  private Runnable createRunnable(List<String> classPaths, String verticleClassName, Optional<String> config, CountDownLatch latch) {
-    URL[] urls = classPaths.stream().map(p -> {
+  private JsonObject loadConfig(List<String> classPath, String configFile) throws IOException {
+    URL[] urls = classPath.stream().map(p -> {
       try {
         return new File(p).toURI().toURL();
-      } catch (Exception e) {
-        logger.error("problem with: " + p, e);
-        throw new RuntimeException(e);
+      } catch (MalformedURLException e) {
+        throw new RuntimeException("error creating URL from path: " + p, e);
       }
     }).toArray(URL[]::new);
-
-    final URLClassLoader urlClassLoader = new URLClassLoader(urls);
-
-    return () -> {
-      try {
-        // bind the new class loader to this thread
-        Thread.currentThread().setContextClassLoader(urlClassLoader);
-        System.setProperty("vertx.disableFileCaching", "true");
-
-        Class<Vertx> vertxClass = loadClassFromContextClassLoader(Vertx.class);
-        Object vertx = createVertx(vertxClass);
-
-        if (config.isPresent()) {
-          deployVerticleWithConfig(verticleClassName, urlClassLoader, vertxClass, vertx, config.get());
-        } else {
-          deployVerticleWithNoConfig(verticleClassName, vertxClass, vertx);
-        }
-        logger.info("verticle deployed");
-        latch.await();
-        closeVertx(vertxClass, vertx);
-        // potential ClassLoader leak here. Need to find a nice way of invoking vertx.close(handler) and synchronising
-      } catch (Exception e) {
-        logger.error("Error starting verticle", e);
-        throw new RuntimeException(e);
+    URLClassLoader classLoader = new URLClassLoader(urls);
+    try {
+      try (InputStream resourceAsStream = classLoader.getResourceAsStream(configFile)) {
+        String config = new Scanner(resourceAsStream, "UTF-8").useDelimiter("\\A").next();
+        return new JsonObject(config);
       }
-    };
-  }
-
-  private Object createVertx(Class<Vertx> vertxClass) throws IllegalAccessException, InvocationTargetException, NoSuchMethodException {
-    return getVertxFactoryMethod(vertxClass).invoke(null);
-  }
-
-  private void closeVertx(Class<Vertx> vertxClass, Object vertx) throws IllegalAccessException, InvocationTargetException, NoSuchMethodException {
-    getVertxCloseMethod(vertxClass).invoke(vertx);
-  }
-
-  private void deployVerticleWithNoConfig(String verticleClassName, Class<Vertx> vertxClass, Object vertx) throws NoSuchMethodException, IllegalAccessException, InvocationTargetException {
-    Method deployVerticle = getDeployVerticleMethodWithNoOptions(vertxClass);
-    deployVerticle.invoke(vertx, verticleClassName);
-  }
-
-  private void deployVerticleWithConfig(String verticleClassName, URLClassLoader urlClassLoader, Class<Vertx> vertxClass, Object vertx, String configFile) throws Exception {
-    Class<DeploymentOptions> deploymentOptionsClass = loadClassFromContextClassLoader(DeploymentOptions.class);
-    Object deploymentOptions = deploymentOptionsClass.newInstance();
-
-    Object jsonConfig = loadConfig(urlClassLoader, configFile);
-    getDeploymentOptionsSetConfigMethod(deploymentOptionsClass).invoke(deploymentOptions, jsonConfig);
-    Method deployVerticle = getDeployVerticleMethodWithOptions(vertxClass, deploymentOptionsClass);
-    deployVerticle.invoke(vertx, verticleClassName, deploymentOptions);
-  }
-
-  private Object loadConfig(ClassLoader classLoader, String configFile) throws Exception {
-    URL resource = classLoader.getResource(configFile);
-    if (resource == null) {
-      logger.error("Failed to load config file: {}", configFile);
-      throw new IOException("Failed to load config file: " + configFile);
-    }
-    try (InputStream resourceAsStream = classLoader.getResourceAsStream(configFile)) {
-      String config = new Scanner(resourceAsStream, "UTF-8").useDelimiter("\\A").next();
-      return loadClassFromContextClassLoader(JsonObject.class)
-        .getConstructor(String.class)
-        .newInstance(config);
+    } finally {
+      classLoader.close();
     }
   }
 }

@@ -23,6 +23,13 @@ public class App extends AbstractVerticle {
   public void start() {
     int port = config().getInteger("port", 8080);
     logger.info("Starting server on port {}", port);
+    getVertx().deployVerticle(new SomeService(), ar-> {
+      if (ar.succeeded()) {
+        logger.info("some service deployed: {}", ar.result());
+      } else {
+        logger.error("failed to deploy some service");
+      }
+    });
     Router router = Routes.create(vertx, this);
     this.server = vertx.createHttpServer().requestHandler(router::accept).listen(port);
     logger.info("Server is started on port {}", port);
@@ -36,23 +43,28 @@ public class App extends AbstractVerticle {
   }
 
   public void test(RoutingContext context) {
+    context.response().setChunked(true);
+    context.response().write(
+      "<!DOCTYPE html>" +
+        "<html lang=\"en\">" +
+        "<head>" +
+        "    <title>Index</title>" +
+        "    <link rel=\"stylesheet\" href=\"components/bootstrap/dist/css/bootstrap.min.css\">" +
+        "    <link rel=\"stylesheet\" href=\"http://bootswatch.com/paper/bootstrap.min.css\"/>" +
+        "</head>" +
+        "<body>" +
+        "<h2>Description</h2>"
+    );
     if (!flag) {
-      context.response().end(
-        "<html>" +
-          "<body>" +
-          "<h2>Description</h2>" +
-          "This is a simple result that tells the story" +
-          "</body>" +
-          "</html>");
+      context.response().write("This is a simple result that tells the story");
     } else {
-      context.response().end(
-        "<html>" +
-          "<body>" +
-          "<h2>Description</h2>" +
-          "This is another story" +
-          "</body>" +
-          "</html>");
+      context.response().write("This is another story");
     }
+    context.response().end(
+      "<script src=\"components/jquery/dist/jquery.min.js\"></script>" +
+      "<script src=\"components/bootstrap/dist/js/bootstrap.min.js\"></script>" +
+      "</body>" +
+      "</html>");
     flag = !flag;
   }
 }

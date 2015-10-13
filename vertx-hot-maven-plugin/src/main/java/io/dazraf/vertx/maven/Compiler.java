@@ -13,9 +13,9 @@ import java.util.List;
 public class Compiler {
   private static final Logger logger = LoggerFactory.getLogger(Compiler.class);
 
-  public static void compile()  {
+  public static void compile(File pomFile)  {
     InvocationRequest request = new DefaultInvocationRequest();
-    request.setPomFile(new File(Utils.getCWD() + "/pom.xml"));
+    request.setPomFile(pomFile);
     List<String> goals = new ArrayList<>();
     goals.add("compile");
     request.setGoals(goals);

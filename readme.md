@@ -73,5 +73,5 @@ excessive rebuilds and defers to a build pipeline in ```HotDeploy#onFileChangeDe
 ```io.dazraf.vertx.maven.Compiler``` to compile with the maven invoker library and then to ```io.dazraf.vertx.maven.VertxManager``` to create a 
 ```Closeable``` vert.x instance with the configured verticle and configFile.
 
-```VertxManager``` creates a new ```ClassLoader``` on the classpaths specified by the project, loads vert.x and deploys the verticle.
-The returned ```Closeable```, on invocation, will tear down the vert.x instance.
+```VertxManager``` deploys the verticle in a full [Isolation Group](http://vertx.io/docs/vertx-core/java/#_verticle_isolation_groups).
+It returns a ```Closable``` which, when invoked by ```HotDeploy``` it tears down your verticle hierarchy.

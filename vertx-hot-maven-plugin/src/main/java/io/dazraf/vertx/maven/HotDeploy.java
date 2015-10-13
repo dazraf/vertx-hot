@@ -5,10 +5,7 @@ import org.slf4j.LoggerFactory;
 import rx.Observable;
 import rx.Subscription;
 
-import java.io.BufferedReader;
-import java.io.Closeable;
-import java.io.IOException;
-import java.io.InputStreamReader;
+import java.io.*;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
@@ -16,6 +13,8 @@ import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
+
+import static java.util.Optional.ofNullable;
 
 public class HotDeploy {
   private static final Logger logger = LoggerFactory.getLogger(HotDeploy.class);
@@ -25,16 +24,17 @@ public class HotDeploy {
   private final List<String> classPaths;
   private final Optional<String> config;
   private final List<String> sourcePaths;
+  private final File pomFile;
   private long startTime;
 
-  public static void run(String verticleClassName, List<String> classPaths, Optional<String> config, List<String> sourcePaths
+  public static void run(File pomFile, String verticleClassName, List<String> classPaths, Optional<String> config, List<String> sourcePaths
   ) throws Exception {
     logger.info("Running HOTDEPLOY with {}", verticleClassName);
-    logger.info("Current working directory: {}", Utils.getCWD());
-    new HotDeploy(verticleClassName, classPaths, config, sourcePaths).run();
+    new HotDeploy(pomFile, verticleClassName, classPaths, config, sourcePaths).run();
   }
 
-  private HotDeploy(String clazzName, List<String> classPaths, Optional<String> config, List<String> sourcePaths) throws Exception {
+  private HotDeploy(File pomFile, String clazzName, List<String> classPaths, Optional<String> config, List<String> sourcePaths) throws Exception {
+    this.pomFile = pomFile;
     this.verticalClassName = clazzName;
     this.classPaths = classPaths;
     this.config = config;
@@ -57,8 +57,7 @@ public class HotDeploy {
       this::onFileChangeDetected,
       this::onError,
       this::onComplete);
-    onFileChangeDetected(null);
-    printLastMessage();
+    compileAndDeploy();
     new BufferedReader(new InputStreamReader(System.in)).readLine();
     logger.info("shutting down ...");
     subscription.unsubscribe();
@@ -81,18 +80,23 @@ public class HotDeploy {
 
   private void onFileChangeDetected(List<Path> paths) {
     if (paths == null || paths.size() > 0) {
-      markFileDetected(Optional.ofNullable(paths));
-      Compiler.compile();
-      loadApp(classPaths);
-      markRedeployed();
+      if (paths != null) {
+        logger.info("file change detected:");
+        paths.stream().forEach(path -> logger.info(path.toString()));
+      }
+      compileAndDeploy();
     }
   }
 
-  private void markFileDetected(Optional<List<Path>> paths) {
-    if (paths.isPresent()) {
-      logger.info("file change detected:");
-      paths.get().stream().forEach(path -> logger.info(path.toString()));
-    }
+  private void compileAndDeploy() {
+    markFileDetected();
+    Compiler.compile(pomFile);
+    loadApp(classPaths);
+    markRedeployed();
+    printLastMessage();
+  }
+
+  private void markFileDetected() {
     this.startTime = System.nanoTime();
   }
 
@@ -125,4 +129,3 @@ public class HotDeploy {
     }
   }
 }
-

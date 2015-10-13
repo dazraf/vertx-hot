@@ -13,6 +13,7 @@ import org.apache.maven.plugins.annotations.ResolutionScope;
 import org.apache.maven.project.MavenProject;
 
 import java.io.File;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -48,7 +49,8 @@ public class VertxHotDeploy extends AbstractMojo {
         project.getCompileSourceRoots().stream(),
         project.getResources().stream().map(Resource::getDirectory)
       ).collect(Collectors.toList());
-      HotDeploy.run(verticleClassName, classPath, ofNullable(configFile), watchedPaths);
+      File pomFile = project.getFile();
+      HotDeploy.run(pomFile, verticleClassName, classPath, ofNullable(configFile), watchedPaths);
     } catch (Exception e) {
       log.error(e);
       throw new MojoExecutionException("failed to startup hot redeploy", e);
