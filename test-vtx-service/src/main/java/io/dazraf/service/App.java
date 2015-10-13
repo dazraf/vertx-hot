@@ -23,7 +23,7 @@ public class App extends AbstractVerticle {
   public void start() {
     int port = config().getInteger("port", 8080);
     logger.info("Starting server on port {}", port);
-    getVertx().deployVerticle(new SomeService(), ar-> {
+    getVertx().deployVerticle(new SomeService(), ar -> {
       if (ar.succeeded()) {
         logger.info("some service deployed: {}", ar.result());
       } else {
@@ -53,18 +53,22 @@ public class App extends AbstractVerticle {
         "    <link rel=\"stylesheet\" href=\"http://bootswatch.com/paper/bootstrap.min.css\"/>" +
         "</head>" +
         "<body>" +
+        "<div class=\"jumbotron\">" +
+        "<div class=\"container\">" +
         "<h2>Description</h2>"
     );
     if (!flag) {
-      context.response().write("This is a simple result that tells the story");
+      context.response().write("<p>This is a simple result that tells the story</p>");
     } else {
-      context.response().write("This is another story");
+      context.response().write("<p>This is another story</p>");
     }
     context.response().end(
-      "<script src=\"components/jquery/dist/jquery.min.js\"></script>" +
-      "<script src=\"components/bootstrap/dist/js/bootstrap.min.js\"></script>" +
-      "</body>" +
-      "</html>");
+      "<a class=\"btn btn-primary\" href=\"/\" role=\"button\">Go Back</a>" +
+        "</div></div>" +
+        "<script src=\"components/jquery/dist/jquery.min.js\"></script>" +
+        "<script src=\"components/bootstrap/dist/js/bootstrap.min.js\"></script>" +
+        "</body>" +
+        "</html>");
     flag = !flag;
   }
 }
