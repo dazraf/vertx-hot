@@ -14,7 +14,7 @@ Contributions most gratefully received and recognised.
 1. __Detect__ source changes
 2. __```compile```__ stale targets
 3. __Hot Reload__
-4. __Full Debug__ without needing to attach to secondary processes.
+4. __Full Debug__ without needing to attach to secondary processes
 5. __Intuitive__ integration with Maven toolchain
 6. __Fast__ at least much faster than using a manual workflow
 
