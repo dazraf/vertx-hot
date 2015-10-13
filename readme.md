@@ -65,6 +65,7 @@ Press either: ```<Enter>``` or  ```Ctrl-C```.
 ## Sample code
 There is a simple test project under ```test-vtx-service```.
 To run it: 
+
 1. After running `mvn clean install` in the parent directory
 2. `cd test-vtx-service`
 3. `mvn vertx:hot`
