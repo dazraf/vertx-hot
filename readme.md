@@ -74,4 +74,4 @@ excessive rebuilds and defers to a build pipeline in ```HotDeploy#onFileChangeDe
 ```Closeable``` vert.x instance with the configured verticle and configFile.
 
 ```VertxManager``` deploys the verticle in a full [Isolation Group](http://vertx.io/docs/vertx-core/java/#_verticle_isolation_groups).
-It returns a ```Closable``` which, when invoked by ```HotDeploy``` it tears down your verticle hierarchy.
+It returns a ```Closable``` which, when invoked by ```HotDeploy```, tears down your verticle hierarchy.
