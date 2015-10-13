@@ -1,5 +1,5 @@
 # Vert.x-Hot
-### A Maven plugin for hot reload of Maven Vert.x applications
+### A Maven plugin for hot reload of Maven Vert.x projects
 ---
 ## Background
 
