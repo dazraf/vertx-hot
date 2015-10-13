@@ -61,10 +61,10 @@ If I want to debug, then similar to above, I *right-click* on the ```vertx:hot``
 
 Press either: ```<Enter>``` or  ```Ctrl-C```.
 
-## 4. Sample code
+## Sample code
 There is a simple test project under ```test-vtx-service```.
 
-## 5. Design
+## Design
 
 ```io.dazraf.vertx.maven.plugin.mojo.VertxHotDeploy#execute``` is the entry point. 
 This collects the maven project paths, together with the classpaths for all dependencies, and defers to
