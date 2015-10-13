@@ -21,8 +21,8 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 
-public class VertxManager implements Closeable {
-  private static final Logger logger = LoggerFactory.getLogger(VertxManager.class);
+public class VerticleDeployer implements Closeable {
+  private static final Logger logger = LoggerFactory.getLogger(VerticleDeployer.class);
   private final Vertx vertx = Vertx.vertx();
   private AtomicLong nextIsolationGroup = new AtomicLong(1);
 

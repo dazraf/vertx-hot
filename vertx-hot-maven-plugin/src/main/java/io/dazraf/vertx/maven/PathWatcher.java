@@ -23,7 +23,6 @@ public class PathWatcher {
     DirectoryChangedSubscriber directoryChangedSubscriber = new DirectoryChangedSubscriber() {
       @Override
       public void directoryChanged(DirectoryWatcher directoryWatcher, Path changedPath) {
-        logger.info("[CHANGED]: {}", changedPath);
         subject.onNext(changedPath);
       }
     };

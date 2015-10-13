@@ -1,26 +1,27 @@
 # Vert.x-Hot
-### A Maven plugin for hot re-deploy of Maven Vert.x applications
+### A Maven plugin for hot reload of Maven Vert.x applications
 ---
 ## Background
 
-I wrote this plugin because, first and foremost, I love using [Vert.x](http://vertx.io) - it has feature-rich and elegant APIs and outstanding performance. Secondly, I wanted the rapid development model that I've experienced
-with frameworks like [Play](https://www.playframework.com/) but, notably, in a traditional *Maven project*.
+This plugin was developed to make development of [Vert.x](http://vertx.io) Verticles in Maven easier. 
 
-I use this plugin for my own workflow, and I'm sharing it in case anyone else finds it useful. Contributions most gratefully received and recognised.
+I'm sharing it in case you find it useful also. 
+
+Contributions most gratefully received and recognised.
  
 ## Aims
 
-1. Simple integration with Maven.
-2. Leverage the maven project definition to correctly identify files that needed rebuilding.
-3. Exercise rebuilding all maven outputs in the ```compile``` phase. This includes generated source, resources, objects etc.
-4. Much faster iteration cycle than the manual processes carried out within the IDE.
-5. __Full Debug__ capability without needing to attach to secondary processes.
+1. __Detect__ source changes
+2. ___```compile```__ stale targets
+3. __Hot Reload__
+4. __Full Debug__ without needing to attach to secondary processes.
+5. __Intuitive__ integration with Maven toolchain
+6. __Fast__ at least much faster than using a manual workflow
 
 ## Instructions
-Four simple steps: *Download*, *Add*, *Run* and *Stop*.
 
 ### Step 1: Download
-Until I upload to maven central, clone this project locally and run ```mvn install```.
+Whilst the plugin is awaiting upload to Maven Central, clone this project locally and run ```mvn install```.
 
 ### Step 2: Add to your project
 Add the following to your project ```pom.xml```:
@@ -50,12 +51,15 @@ You can run it either on the command line with:
 mvn vertx:hot
 ```
 
-Or, in your favourite IDE. In IntelliJ IDEA, I open the Maven side-bar, *expand* the ```Plugins/vertx``` section and 
-*double-click* on ```vertx:hot``` goal.
+Or, in your favourite IDE: 
 
-Any changes to your project's main source (*e.g.* ```src/main```) will cause a hot deploy.
+* __IntelliJ IDEA__: 
+*  open the Maven side-bar, *expand* the ```Plugins/vertx``` section and *double-click* on ```vertx:hot``` goal. Any changes to your project's main source (*e.g.* ```src/main```) will cause a hot deploy. To __Debug__ *right-click* on the ```vertx:hot``` goal and *select* ```Debug```.
+* __Eclipse__: *This plugin has not been tested in Eclipse as yet.*
 
-If I want to debug, then similar to above, I *right-click* on the ```vertx:hot``` goal and *select* ```Debug```.
+
+
+
 
 ### Step 4: Stopping the plugin
 
@@ -64,16 +68,7 @@ Press either: ```<Enter>``` or  ```Ctrl-C```.
 ## Sample code
 There is a simple test project under ```test-vtx-service```.
 
-## Design
+## Design Notes
 
-```io.dazraf.vertx.maven.plugin.mojo.VertxHotDeploy#execute``` is the entry point. 
-This collects the maven project paths, together with the classpaths for all dependencies, and defers to
- ```io.dazraf.vertx.maven.HotDeploy``` for execution. 
- 
-```HotDeploy``` creates a file watcher on all project paths (sources, resources etc), buffers in chunks to avoid 
-excessive rebuilds and defers to a build pipeline in ```HotDeploy#onFileChangeDetected```. This in turn calls the compiler, 
-```io.dazraf.vertx.maven.Compiler``` to compile with the maven invoker library and then to ```io.dazraf.vertx.maven.VertxManager``` to create a 
-```Closeable``` vert.x instance with the configured verticle and configFile.
+![sequence diagram](design.svg)
 
-```VertxManager``` deploys the verticle in a full [Isolation Group](http://vertx.io/docs/vertx-core/java/#_verticle_isolation_groups).
-It returns a ```Closable``` which, when invoked by ```HotDeploy```, tears down your verticle hierarchy.

@@ -7,7 +7,7 @@
     <artifactId>vertx-hot-maven-plugin</artifactId>
     <version>1.0.0-SNAPSHOT</version>
 
-    <name>Vert.x-Hot</name>
+    <name>Vert.x-Hot Maven Plugin</name>
     <description>A Maven plugin for hot re-deploy of Maven Vert.x applications</description>
     <packaging>maven-plugin</packaging>
     <properties>

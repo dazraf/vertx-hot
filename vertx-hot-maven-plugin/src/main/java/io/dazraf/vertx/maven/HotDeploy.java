@@ -17,7 +17,7 @@ import java.util.stream.Collectors;
 public class HotDeploy {
   private static final Logger logger = LoggerFactory.getLogger(HotDeploy.class);
   private final String verticalClassName;
-  private final VertxManager vertxManager = new VertxManager();
+  private final VerticleDeployer vertxManager = new VerticleDeployer();
   private final AtomicReference<Closeable> currentDeployment = new AtomicReference<>();
   private final List<String> classPaths;
   private final Optional<String> config;
@@ -61,7 +61,6 @@ public class HotDeploy {
     subscription.unsubscribe();
     vertxManager.close();
     logger.info("done");
-    System.exit(0);
   }
 
   private void printLastMessage() {

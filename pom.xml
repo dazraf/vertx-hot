@@ -5,7 +5,7 @@
   <modelVersion>4.0.0</modelVersion>
 
   <groupId>io.dazraf</groupId>
-  <artifactId>vertx-hot</artifactId>
+  <artifactId>vertx-hot-parent</artifactId>
   <packaging>pom</packaging>
   <version>1.0.0-SNAPSHOT</version>
   <modules>
