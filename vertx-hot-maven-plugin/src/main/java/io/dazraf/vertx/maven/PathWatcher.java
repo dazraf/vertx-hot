@@ -8,9 +8,7 @@ import org.slf4j.LoggerFactory;
 import rx.Observable;
 import rx.subjects.PublishSubject;
 
-import java.io.File;
 import java.nio.file.Path;
-import java.util.List;
 
 public class PathWatcher {
   private final static Logger logger = LoggerFactory.getLogger(PathWatcher.class);

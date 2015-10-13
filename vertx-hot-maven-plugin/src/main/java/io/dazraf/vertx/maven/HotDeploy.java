@@ -14,8 +14,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
-import static java.util.Optional.ofNullable;
-
 public class HotDeploy {
   private static final Logger logger = LoggerFactory.getLogger(HotDeploy.class);
   private final String verticalClassName;

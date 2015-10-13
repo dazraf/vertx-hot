@@ -1,6 +1,5 @@
 package io.dazraf.vertx.maven;
 
-
 import org.apache.maven.shared.invoker.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -9,11 +8,10 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
-
 public class Compiler {
   private static final Logger logger = LoggerFactory.getLogger(Compiler.class);
 
-  public static void compile(File pomFile)  {
+  public static void compile(File pomFile) {
     InvocationRequest request = new DefaultInvocationRequest();
     request.setPomFile(pomFile);
     List<String> goals = new ArrayList<>();

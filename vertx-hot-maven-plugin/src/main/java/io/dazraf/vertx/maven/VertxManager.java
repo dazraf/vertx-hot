@@ -11,7 +11,6 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.MalformedURLException;
-import java.net.URI;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.Arrays;
@@ -31,7 +30,6 @@ public class VertxManager implements Closeable {
     // We set this property to prevent Vert.x caching files loaded from the classpath on disk
     // This means if you edit the static files in your IDE then the next time they are served the new ones will
     // be served without you having to restart the main()
-    // This is only useful for development - do not use this in a production server
     System.setProperty("vertx.disableFileCaching", "true");
   }
 
