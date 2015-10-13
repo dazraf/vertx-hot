@@ -90,6 +90,7 @@ public class VertxHotDeploy extends AbstractMojo {
    * @param artifacts         the list where to collect the scope specific artifacts
    * @param theClasspathFiles the list where to collect the scope specific output directories
    */
+  @SuppressWarnings("deprecation")
   protected void collectProjectArtifactsAndClasspath(List<Artifact> artifacts, List<File> theClasspathFiles) {
     artifacts.addAll(project.getCompileArtifacts());
     artifacts.addAll(project.getRuntimeArtifacts());

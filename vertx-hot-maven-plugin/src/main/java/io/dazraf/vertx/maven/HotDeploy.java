@@ -113,7 +113,6 @@ public class HotDeploy {
     logger.info("Compiled and redeployed in {}s", String.format("%1.3f", nanos * 1E-9));
   }
 
-  @SuppressWarnings("unchecked")
   private void loadApp(List<String> classPaths) {
     try {
       currentDeployment.getAndUpdate(c -> {

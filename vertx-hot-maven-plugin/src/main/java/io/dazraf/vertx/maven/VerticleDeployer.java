@@ -100,8 +100,10 @@ public class VerticleDeployer implements Closeable {
     URLClassLoader classLoader = new URLClassLoader(urls);
     try {
       try (InputStream resourceAsStream = classLoader.getResourceAsStream(configFile)) {
-        String config = new Scanner(resourceAsStream, "UTF-8").useDelimiter("\\A").next();
-        return new JsonObject(config);
+    	try (Scanner scanner = new Scanner(resourceAsStream, "UTF-8")) {
+            String config = scanner.useDelimiter("\\A").next();
+            return new JsonObject(config);
+    	}    	
       }
     } finally {
       classLoader.close();
