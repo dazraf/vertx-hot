@@ -123,7 +123,6 @@ public class HotDeploy {
       });
       logger.info("Starting deployment");
       currentDeployment.compareAndSet(null, vertxManager.deploy(verticalClassName, classPaths, config));
-      logger.info("Deployment started");
     } catch (Exception e) {
       logger.error("Error in deployment: ", e);
     }
