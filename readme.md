@@ -52,13 +52,14 @@ mvn vertx:hot
 ```
 
 Or, in your favourite IDE: 
+In all cases, you want to have a locally installed maven installations. Bundled / Embedded maven installations [do not work](https://github.com/dazraf/vertx-hot/issues/3).
 
 * __IntelliJ IDEA__: 
   * *Run* - open the Maven side-bar, *expand* the `Plugins/vertx` section and *double-click* on `vertx:hot` goal. Any changes to your project's main source (*e.g.* `src/main`) will cause a hot deploy. 
   * *Debug* - *right-click* on the `vertx:hot` goal and *select* `Debug`.
 * __Eclipse__:
-  * *Run* - create maven build runner for `vertx:hot` goal. `Run` it.
-  * *Debug* - as above, but instead of `Run`, `Debug`
+  * *Run* - create maven build runner for `vertx:hot` goal. For Eclipse Mars on OS X, I found I had to set the JAVA_HOME environment variable in the runner. Once setup, `Run` it.
+  * *Debug* - as above, but instead of `Run`, `Debug`.
 
 ### Step 4: Stopping the plugin
 

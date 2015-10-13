@@ -2,6 +2,7 @@ package io.dazraf.vertx.maven;
 
 import io.vertx.core.DeploymentOptions;
 import io.vertx.core.Vertx;
+import io.vertx.core.VertxOptions;
 import io.vertx.core.json.JsonObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -23,7 +24,7 @@ import java.util.concurrent.atomic.AtomicReference;
 
 public class VerticleDeployer implements Closeable {
   private static final Logger logger = LoggerFactory.getLogger(VerticleDeployer.class);
-  private final Vertx vertx = Vertx.vertx();
+  private final Vertx vertx = Vertx.vertx(new VertxOptions().setBlockedThreadCheckInterval(3_600_000));
   private AtomicLong nextIsolationGroup = new AtomicLong(1);
 
   static {
