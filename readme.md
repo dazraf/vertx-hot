@@ -32,7 +32,7 @@ Add the following to your project ```pom.xml```:
     <version>1.0.0-SNAPSHOT</version>
     <configuration>
         <verticleClassName>io.dazraf.service.App</verticleClassName>
-        <configFile>conf.json</configFile>
+        <configFile>config.json</configFile>
     </configuration>
 </plugin>
 ```
