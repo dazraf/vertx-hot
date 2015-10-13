@@ -64,6 +64,13 @@ Press either: ```<Enter>``` or  ```Ctrl-C```.
 
 ## Sample code
 There is a simple test project under ```test-vtx-service```.
+To run it: 
+1. After running `mvn clean install` in the parent directory
+2. `cd test-vtx-service`
+3. `mvn vertx:hot`
+4. Browse to [localhost:8888](localhost:8888)
+5. Open up the project in your favourite IDE/Editor and try changing some code 
+6. Watch the command line for the rebuild and reload into the browser (would be neat if we could auto-reload in the browser ...)
 
 ## Design Notes
 
