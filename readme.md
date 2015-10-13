@@ -53,7 +53,7 @@ mvn vertx:hot
 
 Or, in your favourite IDE: 
 
-* __For any IDE__ you want to have a locally installed maven installations. Bundled / Embedded maven installations [do not work](https://github.com/dazraf/vertx-hot/issues/3).
+* __For any IDE__ you want to have a locally installed maven installations. Bundled / Embedded maven installation [do not work](https://github.com/dazraf/vertx-hot/issues/3).
 * __IntelliJ IDEA__: 
   * *Run* - open the Maven side-bar, *expand* the `Plugins/vertx` section and *double-click* on `vertx:hot` goal. Any changes to your project's main source (*e.g.* `src/main`) will cause a hot deploy. 
   * *Debug* - *right-click* on the `vertx:hot` goal and *select* `Debug`.
