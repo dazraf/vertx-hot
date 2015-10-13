@@ -3,9 +3,9 @@
 ---
 ## Background
 
-I love coding with [Vert.x](http://vertx.io). Truly an incredible toolkit for developing high-performance applications. Being an old-school Maven head, I wanted to make the development of Maven Vert.x Verticles easier. Specifically the ability to iteratively develop and see ones changes automatically reloaded into a fully debuggable JVM.
+I love coding with [Vert.x](http://vertx.io). Truly an incredible toolkit for developing high-performance applications. Being an old-school Maven head, I wanted to make the development of Maven Vert.x Verticles easier. Specifically to rapidly develop and see ones changes automatically reloaded into a fully debuggable JVM. 
 
-This plugin is being shared here in the hope that you find it useful also. 
+This plugin was originally written for personal use and is shared here in the hope you find it useful also.
 
 Contributions most gratefully received and recognised.
  
