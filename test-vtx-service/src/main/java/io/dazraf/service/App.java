@@ -55,7 +55,7 @@ public class App extends AbstractVerticle {
         "<body>" +
         "<div class=\"jumbotron\">" +
         "<div class=\"container\">" +
-        "<h2>Description</h2>"
+        "<h2>Try Refresh ... </h2>"
     );
     if (!flag) {
       context.response().write("<p>This is a simple result that tells the story</p>");
