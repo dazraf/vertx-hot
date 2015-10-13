@@ -6,8 +6,8 @@ import org.slf4j.LoggerFactory;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
-public class SomeService extends AbstractVerticle {
-  private static final Logger logger = LoggerFactory.getLogger(SomeService.class);
+public class ChildService extends AbstractVerticle {
+  private static final Logger logger = LoggerFactory.getLogger(ChildService.class);
   private static AtomicInteger atomicInteger = new AtomicInteger(0);
   @Override
   public void start() throws Exception {

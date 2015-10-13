@@ -41,26 +41,35 @@ public class HotDeploy {
 
   private void run() throws Exception {
     logger.info("Starting up file watchers");
-    Observable<Path> fileWatch = Observable.merge(
-      sourcePaths.stream().map(path -> {
-        try {
-          return PathWatcher.create(Paths.get(path));
-        } catch (Exception e) {
-          logger.error("error in creating path watcher for path: " + path, e);
-          throw new RuntimeException(e);
-        }
-      }).collect(Collectors.toList()));
-
+    Observable<Path> fileWatch = getFileWatchObservable();
     Subscription subscription = fileWatch.buffer(1, TimeUnit.SECONDS).subscribe(
       this::onFileChangeDetected,
       this::onError,
       this::onComplete);
+
     compileAndDeploy();
-    new BufferedReader(new InputStreamReader(System.in)).readLine();
+    waitForNewLine();
+
     logger.info("shutting down ...");
     subscription.unsubscribe();
     vertxManager.close();
     logger.info("done");
+  }
+
+  private Observable<Path> getFileWatchObservable() {
+    return Observable.merge(
+        sourcePaths.stream().map(path -> {
+          try {
+            return PathWatcher.create(Paths.get(path));
+          } catch (Exception e) {
+            logger.error("Error in creating path watcher for path: " + path, e);
+            throw new RuntimeException(e);
+          }
+        }).collect(Collectors.toList()));
+  }
+
+  private void waitForNewLine() throws IOException {
+    new BufferedReader(new InputStreamReader(System.in)).readLine();
   }
 
   private void printLastMessage() {
@@ -87,8 +96,10 @@ public class HotDeploy {
 
   private void compileAndDeploy() {
     markFileDetected();
+
     Compiler.compile(pomFile);
     loadApp(classPaths);
+
     markRedeployed();
     printLastMessage();
   }

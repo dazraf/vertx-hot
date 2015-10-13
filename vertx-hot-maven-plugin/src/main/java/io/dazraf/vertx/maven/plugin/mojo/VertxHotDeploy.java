@@ -52,7 +52,7 @@ public class VertxHotDeploy extends AbstractMojo {
       HotDeploy.run(pomFile, verticleClassName, classPath, ofNullable(configFile), watchedPaths);
     } catch (Exception e) {
       log.error(e);
-      throw new MojoExecutionException("failed to startup hot redeploy", e);
+      throw new MojoExecutionException("Failed to startup hot redeploy", e);
     }
   }
 

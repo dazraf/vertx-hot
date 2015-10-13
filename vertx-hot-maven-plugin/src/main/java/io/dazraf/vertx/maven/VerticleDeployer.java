@@ -49,21 +49,8 @@ public class VerticleDeployer implements Closeable {
   }
 
   public Closeable deploy(String verticleClassName, List<String> classPaths, Optional<String> config) throws Exception {
-    DeploymentOptions deploymentOptions = new DeploymentOptions()
-      .setExtraClasspath(classPaths)
-      .setIsolationGroup(Long.toString(nextIsolationGroup.getAndIncrement()))
-      .setIsolatedClasses(Arrays.asList("*"));
-    if (config.isPresent()) {
-      JsonObject jsonConfig = loadConfig(classPaths, config.get());
-      deploymentOptions.setConfig(jsonConfig);
-    }
-    AtomicReference<String> verticleId = new AtomicReference<>();
-    CountDownLatch latch = new CountDownLatch(1);
-    vertx.deployVerticle(verticleClassName, deploymentOptions, ar -> {
-      verticleId.set(ar.result());
-      latch.countDown();
-    });
-    latch.await();
+    DeploymentOptions deploymentOptions = createIsolatingDeploymentOptions(classPaths, config);
+    AtomicReference<String> verticleId = deployVerticle(verticleClassName, deploymentOptions);
     return () -> {
       try {
         CountDownLatch closeLatch = new CountDownLatch(1);
@@ -73,6 +60,33 @@ public class VerticleDeployer implements Closeable {
         logger.error("on closing verticle", e);
       }
     };
+  }
+
+  private AtomicReference<String> deployVerticle(String verticleClassName, DeploymentOptions deploymentOptions) throws InterruptedException {
+    AtomicReference<String> verticleId = new AtomicReference<>();
+    CountDownLatch latch = new CountDownLatch(1);
+    vertx.deployVerticle(verticleClassName, deploymentOptions, ar -> {
+      verticleId.set(ar.result());
+      latch.countDown();
+    });
+    latch.await();
+    return verticleId;
+  }
+
+  private DeploymentOptions createIsolatingDeploymentOptions(List<String> classPaths, Optional<String> config) throws IOException {
+    DeploymentOptions result = new DeploymentOptions()
+        .setExtraClasspath(classPaths)
+        .setIsolationGroup(Long.toString(nextIsolationGroup.getAndIncrement()))
+        .setIsolatedClasses(Arrays.asList("*"));
+    return assignConfig(classPaths, config, result);
+  }
+
+  private DeploymentOptions assignConfig(List<String> classPaths, Optional<String> config, DeploymentOptions deploymentOptions) throws IOException {
+    if (config.isPresent()) {
+      JsonObject jsonConfig = loadConfig(classPaths, config.get());
+      deploymentOptions.setConfig(jsonConfig);
+    }
+    return deploymentOptions;
   }
 
   private JsonObject loadConfig(List<String> classPath, String configFile) throws IOException {

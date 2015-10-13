@@ -22,17 +22,19 @@ public class App extends AbstractVerticle {
   @Override
   public void start() throws InterruptedException {
     int port = config().getInteger("port", 8080);
-    logger.info("Starting server on port {}", port);
-    getVertx().deployVerticle(new SomeService(), ar -> {
+    logger.info("Deploying child service");
+    getVertx().deployVerticle(new ChildService(), ar -> {
       if (ar.succeeded()) {
-        logger.info("some service deployed: {}", ar.result());
+        logger.info("Child service deployed: {}", ar.result());
       } else {
-        logger.error("failed to deploy some service");
+        logger.error("Failed to deploy child service");
       }
     });
+    logger.info("Starting server on port {}", port);
     Router router = Routes.create(vertx, this);
     this.server = vertx.createHttpServer().requestHandler(router::accept).listen(port);
     logger.info("Server is started on port {}", port);
+    logger.info("Browse to: http://localhost:8888");
   }
 
   @Override

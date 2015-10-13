@@ -16,7 +16,7 @@ public class PathWatcher {
   public static Observable<Path> create(Path path) throws Exception {
     ThreadPoolDirectoryWatchService factory = new ThreadPoolDirectoryWatchService();
 
-    logger.info("watching: {}", path);
+    logger.info("Watching: {}", path);
     DirectoryWatcher directoryWatcher = factory.newWatcher(path);
 
     PublishSubject<Path> subject = PublishSubject.create();
