@@ -20,8 +20,33 @@ public class Routes {
   public static Router create(Vertx vertx, App app) {
     Router router = Router.router(vertx);
 
-    router.get("/api/test").handler(app::test);
+    bindJavaHandlerPaths(app, router);
+    bindBowerComponents(router);
+    bindHandlebarTemplates(router);
+    bindStaticAppFiles(router);
 
+    return router;
+  }
+
+  private static void bindBowerComponents(Router router) {
+    router.route("/components/*")
+      .handler(StaticHandler
+        .create()
+        .setWebRoot("bower_components"));
+  }
+
+  private static void bindStaticAppFiles(Router router) {
+    router.route().handler(StaticHandler
+      .create()
+      .setCachingEnabled(false)
+      .setWebRoot("static"));
+  }
+
+  private static void bindJavaHandlerPaths(App app, Router router) {
+    router.get("/api/test").handler(app::test);
+  }
+
+  private static void bindHandlebarTemplates(Router router) {
     HandlebarsTemplateEngine engine = HandlebarsTemplateEngine.create();
     engine.setMaxCacheSize(0);
     router.get("/dynamic/:name").handler(ctx -> {
@@ -39,17 +64,5 @@ public class Routes {
         }
       });
     });
-
-    router.route("/components/*")
-      .handler(StaticHandler
-        .create()
-        .setWebRoot("bower_components"));
-
-    router.route().handler(StaticHandler
-      .create()
-      .setCachingEnabled(false)
-      .setWebRoot("static"));
-
-    return router;
   }
 }
