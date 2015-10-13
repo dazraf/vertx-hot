@@ -29,7 +29,7 @@ Add the following to your project ```pom.xml```:
 <plugin>
     <groupId>io.dazraf</groupId>
     <artifactId>vertx-hot-maven-plugin</artifactId>
-    <version>1.0.0</version>
+    <version>1.0.0-SNAPSHOT</version>
     <configuration>
         <verticleClassName>io.dazraf.service.App</verticleClassName>
         <configFile>conf.json</configFile>
