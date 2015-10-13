@@ -1,4 +1,4 @@
-# Vertx-Hot
+# Vert.x-Hot
 ### A Maven plugin for hot re-deploy of Maven Vert.x applications
 ---
 ## 1. Background
