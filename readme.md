@@ -70,5 +70,5 @@ There is a simple test project under ```test-vtx-service```.
 
 ## Design Notes
 
-![sequence diagram](design.svg)
+![sequence diagram](design.png)
 
