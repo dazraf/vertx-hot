@@ -20,7 +20,7 @@ public class App extends AbstractVerticle {
   }
 
   @Override
-  public void start() {
+  public void start() throws InterruptedException {
     int port = config().getInteger("port", 8080);
     logger.info("Starting server on port {}", port);
     getVertx().deployVerticle(new SomeService(), ar -> {

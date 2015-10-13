@@ -11,6 +11,6 @@ public class SomeService extends AbstractVerticle {
   private static AtomicInteger atomicInteger = new AtomicInteger(0);
   @Override
   public void start() throws Exception {
-    logger.info("id: {}", atomicInteger.getAndIncrement());
+    logger.info("This number should always be 0: {}", atomicInteger.getAndIncrement());
   }
 }

@@ -3,16 +3,43 @@
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
+    <groupId>io.dazraf</groupId>
     <artifactId>vertx-hot-maven-plugin</artifactId>
-    <parent>
-        <groupId>io.dazraf</groupId>
-        <artifactId>vertx-hot</artifactId>
-        <version>1.0.0</version>
-    </parent>
+    <version>1.0.0-SNAPSHOT</version>
+
+    <name>Vert.x-Hot</name>
+    <description>A Maven plugin for hot re-deploy of Maven Vert.x applications</description>
     <packaging>maven-plugin</packaging>
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
+
+    <scm>
+        <url>https://github.com/dazraf/vertx-hot</url>
+        <connection>scm:git:git://github.com/dazraf/vertx-hot.git</connection>
+        <developerConnection>scm:git:git@github.com:dazraf/vertx-hot.git</developerConnection>
+    </scm>
+
+    <issueManagement>
+        <url>https://github.com/dazraf/vertx-hot/issues</url>
+        <system>GitHub Issues</system>
+    </issueManagement>
+
+    <developers>
+        <developer>
+            <email>farzad.pezeshkpour@gmail.com</email>
+            <name>Farzad Pezeshkpour</name>
+            <url>https://github.com/dazraf</url>
+            <id>dazraf</id>
+        </developer>
+    </developers>
+    <licenses>
+        <license>
+            <name>MIT Licence</name>
+            <url>http://opensource.org/licenses/MIT</url>
+            <distribution>repo</distribution>
+        </license>
+    </licenses>
 
     <dependencies>
         <dependency>
@@ -105,6 +132,34 @@
                         <phase>process-classes</phase>
                         <goals>
                             <goal>descriptor</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-site-plugin</artifactId>
+                <version>3.4</version>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-javadoc-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>jar</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-source-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>jar</goal>
                         </goals>
                     </execution>
                 </executions>

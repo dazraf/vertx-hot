@@ -67,11 +67,11 @@ public class VertxManager implements Closeable {
     });
     latch.await();
     return () -> {
-      CountDownLatch closeLatch = new CountDownLatch(1);
-      vertx.undeploy(verticleId.get(), ar -> closeLatch.countDown());
       try {
+        CountDownLatch closeLatch = new CountDownLatch(1);
+        vertx.undeploy(verticleId.get(), ar -> closeLatch.countDown());
         closeLatch.await();
-      } catch (InterruptedException e) {
+      } catch (Exception e) {
         logger.error("on closing verticle", e);
       }
     };
