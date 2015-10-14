@@ -6,7 +6,6 @@ import io.vertx.core.Vertx;
 import io.vertx.core.http.HttpServer;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.Router;
-import io.vertx.ext.web.RoutingContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -14,10 +13,13 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.Scanner;
 
+import static io.dazraf.service.utils.routing.RouteMaster.bindHandlebarTemplates;
+import static io.dazraf.service.utils.routing.RouteMaster.bindStatic;
+
 public class App extends AbstractVerticle {
   private static final Logger logger = LoggerFactory.getLogger(App.class);
   private HttpServer server;
-  private boolean flag = false;
+  private AppController appController = new AppController();
 
   // Convenience method so you can run it in your IDE
   public static void main(String[] args) throws Exception {
@@ -39,7 +41,7 @@ public class App extends AbstractVerticle {
   public void start() throws InterruptedException {
     int port = config().getInteger("port", 8080);
     logger.info("Deploying child service");
-    getVertx().deployVerticle(new ChildService(), ar -> {
+    getVertx().deployVerticle(new TimeService(), ar -> {
       if (ar.succeeded()) {
         logger.info("Child service deployed: {}", ar.result());
       } else {
@@ -47,7 +49,7 @@ public class App extends AbstractVerticle {
       }
     });
     logger.info("Starting server on port {}", port);
-    Router router = Routes.create(vertx, this);
+    Router router = createRoutes(vertx);
     this.server = vertx.createHttpServer().requestHandler(router::accept).listen(port);
     logger.info("Server is started on port {}", port);
     logger.info("Browse to: http://localhost:{}", port);
@@ -60,33 +62,14 @@ public class App extends AbstractVerticle {
     super.stop();
   }
 
-  public void test(RoutingContext context) {
-    context.response().setChunked(true);
-    context.response().write(
-      "<!DOCTYPE html>" +
-        "<html lang=\"en\">" +
-        "<head>" +
-        "    <title>Index</title>" +
-        "    <link rel=\"stylesheet\" href=\"components/bootstrap/dist/css/bootstrap.min.css\">" +
-        "    <link rel=\"stylesheet\" href=\"http://bootswatch.com/paper/bootstrap.min.css\"/>" +
-        "</head>" +
-        "<body>" +
-        "<div class=\"jumbotron\">" +
-        "<div class=\"container\">" +
-        "<h2>Try Refresh ... </h2>"
-    );
-    if (!flag) {
-      context.response().write("<p>This is a simple result that tells the story</p>");
-    } else {
-      context.response().write("<p>This is another story</p>");
-    }
-    context.response().end(
-      "<a class=\"btn btn-primary\" href=\"/\" role=\"button\">Go Back</a>" +
-        "</div></div>" +
-        "<script src=\"components/jquery/dist/jquery.min.js\"></script>" +
-        "<script src=\"components/bootstrap/dist/js/bootstrap.min.js\"></script>" +
-        "</body>" +
-        "</html>");
-    flag = !flag;
+  private Router createRoutes(Vertx vertx) {
+    Router router = Router.router(vertx);
+
+    router.get("/api/test").handler(appController::createStory);
+    bindStatic(router, "/components/*", "bower_components");
+    bindHandlebarTemplates(router, appController, "/dynamic", "templates");
+    bindStatic(router, "static");
+
+    return router;
   }
 }
