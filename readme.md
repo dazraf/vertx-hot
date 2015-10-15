@@ -1,4 +1,4 @@
-# Vert.x-Hot
+# vertx:hot
 ### A Maven plugin for hot reload of Maven Vert.x projects
 ---
 
