@@ -11,7 +11,9 @@ I love coding with [Vert.x](http://vertx.io). Truly an incredible toolkit for de
 This plugin was originally written for personal use and is shared here in the hope you find it useful also.
 
 Contributions most gratefully received and recognised.
- 
+
+![demo](animation.gif)
+
 ## Aims
 
 1. __Detect__ source changes
