@@ -4,6 +4,15 @@
 
 [![Build Status](https://travis-ci.org/dazraf/vertx-hot.svg?branch=master)](https://travis-ci.org/dazraf/vertx-hot)
 
+## Contents
+
+1. [Background](#background)
+2. [Demo](#demo)
+3. [Aims](#aims)
+4. [Instructions](#instructions)
+5. [Example Project](#example-project)
+6. [Design Notes](#design-notes)
+
 ## Background
 
 I love coding with [Vert.x](http://vertx.io). Truly an incredible toolkit for developing high-performance applications. Being an old-school Maven head, I wanted to make the development of Maven Vert.x Verticles easier. Specifically to rapidly develop and see ones changes automatically reloaded into a fully debuggable JVM. 
@@ -12,6 +21,7 @@ This plugin was originally written for personal use and is shared here in the ho
 
 Contributions most gratefully received and recognised.
 
+## Demo
 ![demo](animation.gif)
 
 ## Aims
@@ -70,12 +80,12 @@ Or, in your favourite IDE:
 
 Press either: `<Enter>` or  `Ctrl-C`.
 
-## Sample code
-There is a simple test project under `test-vtx-service`.
+## Example Project
+There is a simple test project under `example`.
 To run it: 
 
 1. After running `mvn clean install` in the parent directory
-2. `cd test-vtx-service`
+2. `cd example`
 3. `mvn vertx:hot`
 4. Browse to [http://localhost:8888](http://localhost:8888)
 5. Open up the project in your favourite IDE/Editor and try changing some code 
