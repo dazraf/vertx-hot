@@ -40,6 +40,7 @@ public class App extends AbstractVerticle {
   @Override
   public void start() throws InterruptedException {
     int port = config().getInteger("port", 8080);
+
     logger.info("Deploying child service");
     getVertx().deployVerticle(new TimeService(), ar -> {
       if (ar.succeeded()) {
@@ -48,10 +49,12 @@ public class App extends AbstractVerticle {
         logger.error("Failed to deploy child service");
       }
     });
+
     logger.info("Starting server on port {}", port);
     Router router = createRoutes(vertx);
     this.server = vertx.createHttpServer().requestHandler(router::accept).listen(port);
-    logger.info("Server is started on port {}", port);
+
+    logger.info("Server started on port {}", port);
     logger.info("Browse to: http://localhost:{}", port);
   }
 

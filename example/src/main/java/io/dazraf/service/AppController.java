@@ -18,7 +18,7 @@ public class AppController {
    */
   public String getDodgyHostname() {
     try {
-      return InetAddress.getLocalHost().getHostName();
+       return InetAddress.getLocalHost().getHostName();
     } catch (UnknownHostException e) {
       return e.getMessage();
     }

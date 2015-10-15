@@ -114,24 +114,28 @@ public class HotDeploy {
   }
 
   private void loadApp(List<String> classPaths) {
-    try {
-      currentDeployment.getAndUpdate(c -> {
-        if (c != null) {
-          try {
-            logger.info("Shutting down existing deployment");
-            c.close();
-            logger.info("Deployment shutdown");
-          } catch (IOException e) {
-            logger.error("Error shutting down existing deployment", e);
-            throw new RuntimeException(e);
-          }
+    // atomic
+    currentDeployment.getAndUpdate(c -> {
+      // if we have a deployment, shut it down
+      if (c != null) {
+        try {
+          logger.info("Shutting down existing deployment");
+          c.close();
+          logger.info("Deployment shutdown");
+        } catch (IOException e) {
+          logger.error("Error shutting down existing deployment", e);
+          throw new RuntimeException(e);
         }
-        return null; // clears the reference to the last deployment
-      });
-      logger.info("Starting deployment");
-      currentDeployment.compareAndSet(null, vertxManager.deploy(verticalClassName, classPaths, config));
-    } catch (Exception e) {
-      logger.error("Error in deployment: ", e);
-    }
+      }
+
+      // deploy
+      try {
+        logger.info("Starting deployment");
+        return vertxManager.deploy(verticalClassName, classPaths, config);
+      } catch (Exception e) {
+        logger.error("Error in deployment", e);
+        return null;
+      }
+    });
   }
 }
