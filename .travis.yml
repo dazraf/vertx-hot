@@ -4,7 +4,5 @@ cache:
   - $HOME/.m2
 language: java
 jdk:
-  - openjdk7
-  - oraclejdk7
   - oraclejdk8
 script: mvn clean install
