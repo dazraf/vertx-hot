@@ -1,6 +1,9 @@
 # Vert.x-Hot
 ### A Maven plugin for hot reload of Maven Vert.x projects
 ---
+
+[![Build Status](https://travis-ci.org/dazraf/vertx-hot.svg?branch=master)](https://travis-ci.org/dazraf/vertx-hot)
+
 ## Background
 
 I love coding with [Vert.x](http://vertx.io). Truly an incredible toolkit for developing high-performance applications. Being an old-school Maven head, I wanted to make the development of Maven Vert.x Verticles easier. Specifically to rapidly develop and see ones changes automatically reloaded into a fully debuggable JVM. 
