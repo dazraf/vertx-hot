@@ -76,9 +76,9 @@ public class VerticleDeployer implements Closeable {
 
   private DeploymentOptions createIsolatingDeploymentOptions(List<String> classPaths, Optional<String> config) throws IOException {
     DeploymentOptions result = new DeploymentOptions()
-        .setExtraClasspath(classPaths)
-        .setIsolationGroup(Long.toString(nextIsolationGroup.getAndIncrement()))
-        .setIsolatedClasses(Arrays.asList("*"));
+      .setExtraClasspath(classPaths)
+      .setIsolationGroup(Long.toString(nextIsolationGroup.getAndIncrement()))
+      .setIsolatedClasses(Arrays.asList("*"));
     return assignConfig(classPaths, config, result);
   }
 
@@ -101,10 +101,10 @@ public class VerticleDeployer implements Closeable {
     URLClassLoader classLoader = new URLClassLoader(urls);
     try {
       try (InputStream resourceAsStream = classLoader.getResourceAsStream(configFile)) {
-    	try (Scanner scanner = new Scanner(resourceAsStream, "UTF-8")) {
-            String config = scanner.useDelimiter("\\A").next();
-            return new JsonObject(config);
-    	}    	
+        try (Scanner scanner = new Scanner(resourceAsStream, "UTF-8")) {
+          String config = scanner.useDelimiter("\\A").next();
+          return new JsonObject(config);
+        }
       }
     } finally {
       classLoader.close();

@@ -8,10 +8,12 @@ import java.net.UnknownHostException;
 public class AppController {
   private boolean flag = false;
 
-  public AppController() {}
+  public AppController() {
+  }
 
   /**
    * This is an example of a property that will be used by a tempplate
+   *
    * @return the hostname of the server, kinda
    */
   public String getDodgyHostname() {
@@ -24,6 +26,7 @@ public class AppController {
 
   /**
    * This is an example of a method that's called by the web routing
+   *
    * @param context the routing context
    */
   public void createStory(RoutingContext context) {

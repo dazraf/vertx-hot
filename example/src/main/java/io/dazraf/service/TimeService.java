@@ -13,6 +13,7 @@ public class TimeService extends AbstractVerticle {
   private static AtomicInteger atomicInteger = new AtomicInteger(0);
   private static SimpleDateFormat formatter = new SimpleDateFormat("HH:mm:ss");
   private long timerId;
+
   @Override
   public void start() throws Exception {
     logger.info("This number should always be 0: {}", atomicInteger.getAndIncrement());

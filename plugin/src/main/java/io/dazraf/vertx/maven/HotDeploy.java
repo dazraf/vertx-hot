@@ -58,14 +58,14 @@ public class HotDeploy {
 
   private Observable<Path> getFileWatchObservable() {
     return Observable.merge(
-        sourcePaths.stream().map(path -> {
-          try {
-            return PathWatcher.create(Paths.get(path));
-          } catch (Exception e) {
-            logger.error("Error in creating path watcher for path: " + path, e);
-            throw new RuntimeException(e);
-          }
-        }).collect(Collectors.toList()));
+      sourcePaths.stream().map(path -> {
+        try {
+          return PathWatcher.create(Paths.get(path));
+        } catch (Exception e) {
+          logger.error("Error in creating path watcher for path: " + path, e);
+          throw new RuntimeException(e);
+        }
+      }).collect(Collectors.toList()));
   }
 
   private void waitForNewLine() throws IOException {

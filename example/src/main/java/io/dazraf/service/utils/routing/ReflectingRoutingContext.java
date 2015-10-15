@@ -19,6 +19,7 @@ import static java.util.stream.Stream.of;
 class ReflectingRoutingContext extends RoutingContextDecorator {
   private final Object data;
   private final AtomicReference<Map<String, Object>> map = new AtomicReference<>();
+
   @Override
   public boolean removeBodyEndHandler(int handlerID) {
     return super.removeBodyEndHandler(handlerID);
@@ -32,7 +33,7 @@ class ReflectingRoutingContext extends RoutingContextDecorator {
   @SuppressWarnings("unchecked")
   @Override
   public <T> T get(String key) {
-    return (T)data().get(key);
+    return (T) data().get(key);
   }
 
   @Override
@@ -131,14 +132,14 @@ class ReflectingRoutingContext extends RoutingContextDecorator {
   private Map<String, Supplier<Object>> buildFnMap() {
     Method[] gets = getClassGetters(data);
     return of(gets)
-    .collect(
-      Collectors.toMap(
-        this::getPropertyName,
-        this::getMethodSupplierFunction));
+      .collect(
+        Collectors.toMap(
+          this::getPropertyName,
+          this::getMethodSupplierFunction));
   }
 
   private String getPropertyName(Method m) {
-      return m.getName().substring(3);
+    return m.getName().substring(3);
   }
 
   private Supplier<Object> getMethodSupplierFunction(Method m) {
@@ -156,7 +157,7 @@ class ReflectingRoutingContext extends RoutingContextDecorator {
   private static Method[] getClassGetters(Object data) {
     return cachedClasses.computeIfAbsent(data.getClass(),
       aClass -> of(aClass.getDeclaredMethods())
-      .filter(filterMethod())
+        .filter(filterMethod())
         .toArray(Method[]::new));
   }
 
