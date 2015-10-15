@@ -3,11 +3,15 @@
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
-    <groupId>io.dazraf</groupId>
-    <artifactId>vertx-hot-maven-plugin</artifactId>
-    <version>1.0.0-SNAPSHOT</version>
+    <parent>
+        <groupId>io.dazraf</groupId>
+        <artifactId>vertx-hot-parent</artifactId>
+        <version>1.0.0-SNAPSHOT</version>
+    </parent>
 
-    <name>Vert.x-Hot Maven Plugin</name>
+    <artifactId>vertx-hot-maven-plugin</artifactId>
+
+    <name>vert.x-hot maven plugin</name>
     <description>A Maven plugin for hot re-deploy of Maven Vert.x applications</description>
     <packaging>maven-plugin</packaging>
     <properties>
@@ -144,18 +148,8 @@
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-javadoc-plugin</artifactId>
-                <executions>
-                    <execution>
-                        <goals>
-                            <goal>jar</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-source-plugin</artifactId>
+                <version>2.4</version>
                 <executions>
                     <execution>
                         <goals>
