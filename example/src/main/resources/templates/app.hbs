@@ -2,20 +2,23 @@
 <html lang="en">
 <head>
   <title>A template</title>
-  <link rel="stylesheet" href="components/bootstrap/dist/css/bootstrap.min.css">
+  <link rel="stylesheet" href="/components/bootstrap/dist/css/bootstrap.min.css">
   <link rel="stylesheet" href="http://bootswatch.com/paper/bootstrap.min.css"/>
 </head>
 <body>
 <div class="jumbotron">
   <div class="container">
-    <h1>Hostname <span class="label label-default">{{DodgyHostname}}</span></h1>
+    <h1>Templating</h1>
 
-    <p>Templating with Handlebars</p>
+    <p>... with Handlebars</p>
     <a class="btn btn-success" href="/" role="button">Go Back</a>
   </div>
 </div>
 
-<script src="components/jquery/dist/jquery.min.js"></script>
-<script src="components/bootstrap/dist/js/bootstrap.min.js"></script>
+<h4>Server Details</h4>
+<p><kbd>Time:</kbd> {{HostTime}}</p>
+<p><kbd>Hostname:</kbd> {{DodgyHostname}}</p>
+<script src="/components/jquery/dist/jquery.min.js"></script>
+<script src="/components/bootstrap/dist/js/bootstrap.min.js"></script>
 </body>
 </html>

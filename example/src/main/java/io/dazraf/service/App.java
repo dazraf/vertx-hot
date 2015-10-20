@@ -12,6 +12,7 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Scanner;
+import java.util.concurrent.CountDownLatch;
 
 import static io.dazraf.service.utils.routing.RouteMaster.bindHandlebarTemplates;
 import static io.dazraf.service.utils.routing.RouteMaster.bindStatic;
@@ -52,10 +53,20 @@ public class App extends AbstractVerticle {
 
     logger.info("Starting server on port {}", port);
     Router router = createRoutes(vertx);
-    this.server = vertx.createHttpServer().requestHandler(router::accept).listen(port);
 
-    logger.info("Server started on port {}", port);
-    logger.info("Browse to: http://localhost:{}", port);
+    CountDownLatch latch = new CountDownLatch(1);
+    this.server = vertx
+      .createHttpServer()
+      .requestHandler(router::accept)
+      .listen(port, ar -> {
+        if (ar.succeeded()) {
+          this.server = ar.result();
+          logger.info("Server started on port {}", port);
+          logger.info("Browse to: http://localhost:{}", port);
+        } else {
+          logger.error("Failed to start up: ", ar.cause());
+        }
+      });
   }
 
   @Override

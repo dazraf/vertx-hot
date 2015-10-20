@@ -1,5 +1,7 @@
 package io.dazraf.vertx.maven;
 
+import io.vertx.core.eventbus.MessageProducer;
+import io.vertx.core.json.JsonObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import rx.Observable;
@@ -15,15 +17,24 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
 public class HotDeploy {
+  public enum DeployStatus {
+    COMPILING,
+    DEPLOYING,
+    DEPLOYED,
+    STOPPED
+  }
+
   private static final Logger logger = LoggerFactory.getLogger(HotDeploy.class);
   private final String verticalClassName;
   private final VerticleDeployer vertxManager = new VerticleDeployer();
+  private final MessageProducer<JsonObject> statusProducer = vertxManager.createEventProducer();
   private final AtomicReference<Closeable> currentDeployment = new AtomicReference<>();
   private final List<String> classPaths;
   private final Optional<String> config;
   private final List<String> sourcePaths;
   private final File pomFile;
   private long startTime;
+  private String clientHttpService = "http://localhost:8888";
 
   public static void run(File pomFile, String verticleClassName, List<String> classPaths, Optional<String> config, List<String> sourcePaths
   ) throws Exception {
@@ -51,6 +62,7 @@ public class HotDeploy {
     waitForNewLine();
 
     logger.info("shutting down ...");
+    sendStatus(DeployStatus.STOPPED);
     subscription.unsubscribe();
     vertxManager.close();
     logger.info("done");
@@ -96,7 +108,7 @@ public class HotDeploy {
 
   private void compileAndDeploy() {
     markFileDetected();
-
+    sendStatus(DeployStatus.COMPILING);
     Compiler.compile(pomFile);
     loadApp(classPaths);
 
@@ -116,6 +128,7 @@ public class HotDeploy {
   private void loadApp(List<String> classPaths) {
     // atomic
     currentDeployment.getAndUpdate(c -> {
+      sendStatus(DeployStatus.DEPLOYING);
       // if we have a deployment, shut it down
       if (c != null) {
         try {
@@ -131,11 +144,20 @@ public class HotDeploy {
       // deploy
       try {
         logger.info("Starting deployment");
-        return vertxManager.deploy(verticalClassName, classPaths, config);
-      } catch (Exception e) {
+        Closeable closeable =  vertxManager.deploy(verticalClassName, classPaths, config);
+        sendStatus(DeployStatus.DEPLOYED);
+        return closeable;
+      } catch (Throwable e) {
         logger.error("Error in deployment", e);
         return null;
       }
     });
+  }
+
+  private void sendStatus(DeployStatus deployStatus) {
+    statusProducer.write(
+      new JsonObject()
+        .put("status", deployStatus.toString())
+        .put("url", clientHttpService));
   }
 }

@@ -1,8 +1,11 @@
 package io.dazraf.vertx.maven;
 
+import io.vertx.core.AsyncResult;
 import io.vertx.core.DeploymentOptions;
 import io.vertx.core.Vertx;
 import io.vertx.core.VertxOptions;
+import io.vertx.core.eventbus.MessageProducer;
+import io.vertx.core.impl.VertxWrapper;
 import io.vertx.core.json.JsonObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,14 +27,22 @@ import java.util.concurrent.atomic.AtomicReference;
 
 public class VerticleDeployer implements Closeable {
   private static final Logger logger = LoggerFactory.getLogger(VerticleDeployer.class);
-  private final Vertx vertx = Vertx.vertx(new VertxOptions().setBlockedThreadCheckInterval(3_600_000));
+  private final Vertx vertx = new VertxWrapper(new VertxOptions().setBlockedThreadCheckInterval(3_600_000));
   private AtomicLong nextIsolationGroup = new AtomicLong(1);
 
   static {
     // We set this property to prevent Vert.x caching files loaded from the classpath on disk
-    // This means if you edit the static files in your IDE then the next time they are served the new ones will
+    // This means if you edit the template files in your IDE then the next time they are served the new ones will
     // be served without you having to restart the main()
     System.setProperty("vertx.disableFileCaching", "true");
+  }
+
+  public VerticleDeployer() {
+    vertx.deployVerticle(new WebContainer());
+  }
+
+  public MessageProducer<JsonObject> createEventProducer() {
+    return vertx.eventBus().publisher(WebContainer.TOPIC);
   }
 
   public void close() {
@@ -49,13 +60,13 @@ public class VerticleDeployer implements Closeable {
     }
   }
 
-  public Closeable deploy(String verticleClassName, List<String> classPaths, Optional<String> config) throws Exception {
+  public Closeable deploy(String verticleClassName, List<String> classPaths, Optional<String> config) throws Throwable {
     DeploymentOptions deploymentOptions = createIsolatingDeploymentOptions(classPaths, config);
-    AtomicReference<String> verticleId = deployVerticle(verticleClassName, deploymentOptions);
+    final String verticleId = deployVerticle(verticleClassName, deploymentOptions);
     return () -> {
       try {
         CountDownLatch closeLatch = new CountDownLatch(1);
-        vertx.undeploy(verticleId.get(), ar -> closeLatch.countDown());
+        vertx.undeploy(verticleId, ar -> closeLatch.countDown());
         closeLatch.await();
       } catch (Exception e) {
         logger.error("on closing verticle", e);
@@ -63,15 +74,20 @@ public class VerticleDeployer implements Closeable {
     };
   }
 
-  private AtomicReference<String> deployVerticle(String verticleClassName, DeploymentOptions deploymentOptions) throws InterruptedException {
-    AtomicReference<String> verticleId = new AtomicReference<>();
+  private String deployVerticle(String verticleClassName, DeploymentOptions deploymentOptions) throws Throwable {
+    AtomicReference<AsyncResult<String>> result = new AtomicReference<>();
     CountDownLatch latch = new CountDownLatch(1);
     vertx.deployVerticle(verticleClassName, deploymentOptions, ar -> {
-      verticleId.set(ar.result());
+      result.set(ar);
       latch.countDown();
     });
     latch.await();
-    return verticleId;
+    AsyncResult<String> r = result.get();
+    if (r.failed()) {
+      throw r.cause();
+    } else {
+      return r.result();
+    }
   }
 
   private DeploymentOptions createIsolatingDeploymentOptions(List<String> classPaths, Optional<String> config) throws IOException {
