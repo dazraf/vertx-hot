@@ -21,6 +21,7 @@ public class HotDeploy {
     COMPILING,
     DEPLOYING,
     DEPLOYED,
+    FAILED,
     STOPPED
   }
 
@@ -34,7 +35,6 @@ public class HotDeploy {
   private final List<String> sourcePaths;
   private final File pomFile;
   private long startTime;
-  private String clientHttpService = "http://localhost:8888";
 
   public static void run(File pomFile, String verticleClassName, List<String> classPaths, Optional<String> config, List<String> sourcePaths
   ) throws Exception {
@@ -109,8 +109,12 @@ public class HotDeploy {
   private void compileAndDeploy() {
     markFileDetected();
     sendStatus(DeployStatus.COMPILING);
-    Compiler.compile(pomFile);
-    loadApp(classPaths);
+    try {
+      Compiler.compile(pomFile);
+      loadApp(classPaths);
+    } catch (Exception e) {
+      sendStatus(e);
+    }
 
     markRedeployed();
     printLastMessage();
@@ -148,6 +152,7 @@ public class HotDeploy {
         sendStatus(DeployStatus.DEPLOYED);
         return closeable;
       } catch (Throwable e) {
+        sendStatus(e);
         logger.error("Error in deployment", e);
         return null;
       }
@@ -157,7 +162,13 @@ public class HotDeploy {
   private void sendStatus(DeployStatus deployStatus) {
     statusProducer.write(
       new JsonObject()
-        .put("status", deployStatus.toString())
-        .put("url", clientHttpService));
+        .put("status", deployStatus.toString()));
+  }
+
+  private void sendStatus(Throwable e) {
+    statusProducer.write(
+      new JsonObject()
+      .put("status", DeployStatus.FAILED.toString())
+      .put("cause", e.getMessage()));
   }
 }

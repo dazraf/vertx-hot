@@ -1,16 +1,9 @@
-var root = null;
-var connection = null;
-var notification = null;
-
-function start(rootClientWeb) {
-  root = rootClientWeb;
-  connection = new WebSocket("ws://localhost:9999/vertx/hot");
+function start() {
+  var connection = new WebSocket("ws://localhost:9999/vertx/hot");
   connection.onmessage = onWebSocketMessage;
+  connection.onclose = onWebSocketClose;
 }
 
-function finish() {
-  connection.close()
-}
 
 function onWebSocketMessage(evt) {
   var message = JSON.parse(evt.data);
@@ -24,6 +17,9 @@ function onWebSocketMessage(evt) {
   case "DEPLOYED":
     notifyDeployed(message);
     break;
+  case "FAILED":
+    notifyFailed(message);
+    break;
   case "STOPPED":
     notifyStopped(message);
     break;
@@ -33,25 +29,30 @@ function onWebSocketMessage(evt) {
   }
 }
 
-function notifyCompiling(message) {
-  closeNotification();
-  ensureNotification();
-  notification.update("message", "Compiling ...");
+function onWebSocketClose() {
+  setTimeout(start, 1000);
 }
 
+function notifyCompiling(message) {
+  closeNotification();
+  notify("Compiling");
+}
 
 
 function notifyDeploying(message) {
-  ensureNotification();
-  notification.update('message', "Deploying...");
+  notify("Deploying...");
 }
 
 function notifyDeployed(message) {
-  ensureNotification();
-  notification.update("message", "Deployed");
-  setTimeout(function() {
-    closeNotification();
-  }, 1000);
+  notify("Deployed");
+}
+function notifyFailed(message) {
+  notify("Compilation Failed");
+  document.body.innerHTML="<pre>"+message.cause+"</pre>"
+}
+
+function notify(message) {
+  document.title = message;
 }
 
 function onWebSocketError(error) {
@@ -59,36 +60,12 @@ function onWebSocketError(error) {
 }
 
 function reload(url) {
-  try {
-    var currentLocation = root;
-    var iframe = document.getElementById('embedded');
-
-    if (url != root) {
-      root = url;
-      iframe.src = url;
-    } else {
-      iframe.src = iframe.contentWindow.location.href;
-    }
-  } catch (err) {
-    console.log("error!");
-    console.log(err);
-  }
+  location.reload();
 }
 
 function closeNotification() {
-  if (notification != null) {
-    notification.close();
-    notification = null;
-  }
+  notify("");
 }
 
-function ensureNotification() {
-  if (notification == null) {
-    notification = $.notify({
-      message: ""
-    }, {
-      allow_dismiss: false,
-      type: "info"
-    });
-  }
-}
+
+start();

@@ -18,23 +18,19 @@ public class AppController {
 
   public AppController() {
   }
+  
+  public String getHostTime() {
+    return LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_TIME);
+  }
 
-  /**
-   * This is an example of a property that will be used by a tempplate
-   *
-   * @return the hostname of the server, kinda
-   */
-  public String getDodgyHostname() {
-    try {
-      return InetAddress.getLocalHost().getHostName();
-    } catch (UnknownHostException e) {
-     return e.getMessage();
-   }
- }
-
- public String getHostTime() {
-  return LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_TIME);
-}
+  public String getHostname() {
+    return "hidden";
+//    try {
+//      return InetAddress.getLocalHost().getHostName();
+//    } catch (UnknownHostException e) {
+//      return e.getMessage();
+//    }
+  }
 
   /**
    * This is an example of a method that's called by the web routing

@@ -16,13 +16,13 @@ import java.util.stream.StreamSupport;
 
 import static java.util.Optional.*;
 
-public class DomainSettingHttpServerResponse implements HttpServerResponse {
+public class InjectingHttpServerResponse implements HttpServerResponse {
   private final HttpServerResponse wrapped;
-  private String domainScript = "<script>document.domain='localhost'</script>";
+  private String injectedScript = "<script src='/__vertx_hot/scripts/connection.js'></script>";
   private boolean htmlDetected = false;
   private final Function<String, File> fileResolver;
 
-  public DomainSettingHttpServerResponse(HttpServerResponse response, Function<String, File> fileResolver) {
+  public InjectingHttpServerResponse(HttpServerResponse response, Function<String, File> fileResolver) {
     this.wrapped = response;
     this.fileResolver = fileResolver;
     this.wrapped.setChunked(true);
@@ -202,7 +202,7 @@ public class DomainSettingHttpServerResponse implements HttpServerResponse {
   @Override
   public void end(Buffer chunk) {
     if (detectHtml(chunk)) {
-      Buffer newBuffer = chunk.copy().appendString(domainScript);
+      Buffer newBuffer = chunk.copy().appendString(injectedScript);
       wrapped.end(newBuffer);
     } else {
       wrapped.end(chunk);
@@ -212,7 +212,7 @@ public class DomainSettingHttpServerResponse implements HttpServerResponse {
   @Override
   public void end() {
     if (htmlDetected) {
-      wrapped.end(domainScript);
+      wrapped.end(injectedScript);
     } else {
       wrapped.end();
     }
@@ -294,7 +294,7 @@ public class DomainSettingHttpServerResponse implements HttpServerResponse {
   }
 
   private String appendClose(String chunk) {
-    return chunk + domainScript;
+    return chunk + injectedScript;
   }
 
   private Optional<String> getHtmlHeader() {
@@ -332,7 +332,7 @@ public class DomainSettingHttpServerResponse implements HttpServerResponse {
             }
           }
         }
-        buffer.appendString(domainScript);
+        buffer.appendString(injectedScript);
         return of(buffer);
       } catch (IOException e) {
         e.printStackTrace();

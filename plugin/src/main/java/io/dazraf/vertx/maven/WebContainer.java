@@ -20,7 +20,6 @@ public class WebContainer extends AbstractVerticle {
   @Override
   public void start() throws Exception {
     httpServer = vertx.createHttpServer();
-    Router router = Router.router(vertx);
     HandlebarsTemplateEngine engine = HandlebarsTemplateEngine.create();
     engine.setMaxCacheSize(0);
 
@@ -29,32 +28,12 @@ public class WebContainer extends AbstractVerticle {
       lastState = m.body();
     });
 
-    bindStatic(router, "/components/*", "bower_components");
-    bindStatic(router, "/scripts/*", "scripts");
-    router.get("/").handler(ctx -> {
-      ctx.response().setChunked(true);
-      ctx.put("url", "http://localhost:8888");
-      engine.render(ctx, "template/hot.hbs", res -> {
-        if (res.succeeded()) {
-          ctx.response().end(res.result());
-        } else {
-          ctx.fail(res.cause());
-        }
-      });
-    });
-
-
     httpServer
-      .requestHandler(router::accept)
       .websocketHandler(websocketHandler -> {
           if (!websocketHandler.path().equals("/vertx/hot")) {
             websocketHandler.reject();
             return;
           }
-          if (lastState != null) {
-            websocketHandler.writeFinalTextFrame(lastState.toString());
-          }
-
           MessageConsumer<JsonObject> consumer = vertx.eventBus().consumer(TOPIC);
           consumer.handler(m -> {
             websocketHandler.writeFinalTextFrame(m.body().toString());

@@ -18,7 +18,7 @@ public class HttpServerRequestWrapper implements HttpServerRequest {
 
   public HttpServerRequestWrapper(HttpServerRequest wrapped, Function<String, File> fileResolver) {
     this.wrapped = wrapped;
-    this.response = new DomainSettingHttpServerResponse(wrapped.response(), fileResolver);
+    this.response = new InjectingHttpServerResponse(wrapped.response(), fileResolver);
   }
 
   @Override
