@@ -2,6 +2,9 @@ package io.dazraf.vertx.maven;
 
 import io.vertx.core.eventbus.MessageProducer;
 import io.vertx.core.json.JsonObject;
+import org.apache.maven.model.io.xpp3.MavenXpp3Reader;
+import org.apache.maven.project.MavenProject;
+import org.codehaus.plexus.util.xml.pull.XmlPullParserException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import rx.Observable;
@@ -108,11 +111,13 @@ public class HotDeploy {
 
   private void compileAndDeploy() {
     markFileDetected();
+    logger.info("Compiling...");
     sendStatus(DeployStatus.COMPILING);
     try {
       Compiler.compile(pomFile);
       loadApp(classPaths);
     } catch (Exception e) {
+      logger.error("error", e);
       sendStatus(e);
     }
 
@@ -170,5 +175,14 @@ public class HotDeploy {
       new JsonObject()
       .put("status", DeployStatus.FAILED.toString())
       .put("cause", e.getMessage()));
+  }
+
+  private List<Path> getClassPath(File pomFile) throws Exception {
+    MavenXpp3Reader mavenReader = new MavenXpp3Reader();
+    FileReader reader = new FileReader(pomFile);
+    org.apache.maven.model.Model model = mavenReader.read(reader);
+    model.setPomFile(pomFile);
+    MavenProject project = new MavenProject(model);
+    return null;
   }
 }

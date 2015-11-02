@@ -1,0 +1,18 @@
+@import url(https://fonts.googleapis.com/css?family=Lobster);
+@import url(https://fonts.googleapis.com/css?family=Raleway);
+
+h1,h2 {
+  font-family: 'Lobster', serif;
+}
+
+.list-item {
+  font-family: 'Raleway', serif;
+}
+
+.input-new-item {
+  font-family: 'Raleway', serif;
+}
+
+.add-btn {
+  font-family: 'Lobster', serif;
+}

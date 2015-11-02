@@ -20,7 +20,7 @@ import static io.dazraf.service.utils.routing.RouteMaster.bindStatic;
 public class App extends AbstractVerticle {
   private static final Logger logger = LoggerFactory.getLogger(App.class);
   private HttpServer server;
-  private AppController appController = new AppController();
+  private AppController appController;
 
   // Convenience method so you can run it in your IDE
   public static void main(String[] args) throws Exception {
@@ -42,14 +42,7 @@ public class App extends AbstractVerticle {
   public void start() throws InterruptedException {
     int port = config().getInteger("port", 8080);
 
-    logger.info("Deploying child service");
-    getVertx().deployVerticle(new TimeService(), ar -> {
-      if (ar.succeeded()) {
-        logger.info("Child service deployed: {}", ar.result());
-      } else {
-        logger.error("Failed to deploy child service");
-      }
-    });
+    appController = new AppController();
 
     logger.info("Starting server on port {}", port);
     Router router = createRoutes(vertx);
@@ -72,13 +65,12 @@ public class App extends AbstractVerticle {
   @Override
   public void stop() throws Exception {
     logger.info("stopping");
+    appController.close();
     server.close();
-    super.stop();
   }
 
   private Router createRoutes(Vertx vertx) {
     Router router = Router.router(vertx);
-
     router.get("/api/test").handler(appController::createStory);
     bindStatic(router, "/components/*", "bower_components");
     bindHandlebarTemplates(router, appController, "/dynamic", "templates");

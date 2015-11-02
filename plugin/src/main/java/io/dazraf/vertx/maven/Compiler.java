@@ -24,6 +24,7 @@ public class Compiler {
 
     request.setOutputHandler(msg -> {
       if (pattern.matcher(msg).matches()) {
+        System.out.println(msg);
         messages.add(msg);
       }
     });
