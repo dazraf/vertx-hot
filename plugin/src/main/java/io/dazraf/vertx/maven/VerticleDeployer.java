@@ -52,25 +52,35 @@ public class VerticleDeployer implements Closeable {
   public Closeable deploy(String verticleClassName, List<String> classPaths, Optional<String> config) throws Exception {
     DeploymentOptions deploymentOptions = createIsolatingDeploymentOptions(classPaths, config);
     AtomicReference<String> verticleId = deployVerticle(verticleClassName, deploymentOptions);
-    return () -> {
-      try {
-        CountDownLatch closeLatch = new CountDownLatch(1);
-        vertx.undeploy(verticleId.get(), ar -> closeLatch.countDown());
-        closeLatch.await();
-      } catch (Exception e) {
-        logger.error("on closing verticle", e);
-      }
+    return verticleId.get() == null ? null : () -> {
+        try {
+          CountDownLatch closeLatch = new CountDownLatch(1);
+          vertx.undeploy(verticleId.get(), ar -> closeLatch.countDown());
+          closeLatch.await();
+        } catch (Exception e) {
+          logger.error("on closing verticle", e);
+        }
     };
   }
 
   private AtomicReference<String> deployVerticle(String verticleClassName, DeploymentOptions deploymentOptions) throws InterruptedException {
     AtomicReference<String> verticleId = new AtomicReference<>();
     CountDownLatch latch = new CountDownLatch(1);
-    vertx.deployVerticle(verticleClassName, deploymentOptions, ar -> {
-      verticleId.set(ar.result());
-      latch.countDown();
-    });
-    latch.await();
+    try {
+      vertx.deployVerticle(verticleClassName, deploymentOptions, ar -> {
+        verticleId.set(ar.result());
+        latch.countDown();
+      });
+      latch.await();
+    } catch(Error err) {
+      // Vertx throws a generic java.lang.Error on Verticle compilation failure
+      if (!(err instanceof VirtualMachineError)) {
+        logger.error("on deploying verticle", err);
+        verticleId.set(null);
+      } else {
+        throw err;
+      }
+    }
     return verticleId;
   }
 
