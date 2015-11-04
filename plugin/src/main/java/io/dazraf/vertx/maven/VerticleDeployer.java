@@ -68,6 +68,9 @@ public class VerticleDeployer implements Closeable {
     CountDownLatch latch = new CountDownLatch(1);
     try {
       vertx.deployVerticle(verticleClassName, deploymentOptions, ar -> {
+        if (ar.failed()) {
+          logger.error("on deploying verticle {}", verticleClassName, ar.cause());	
+        }
         verticleId.set(ar.result());
         latch.countDown();
       });
@@ -75,7 +78,7 @@ public class VerticleDeployer implements Closeable {
     } catch(Error err) {
       // Vertx throws a generic java.lang.Error on Verticle compilation failure
       if (!(err instanceof VirtualMachineError)) {
-        logger.error("on deploying verticle", err);
+        logger.error("on compiling verticle {}", verticleClassName, err);
         verticleId.set(null);
       } else {
         throw err;
