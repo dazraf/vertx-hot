@@ -1,10 +1,13 @@
 package io.dazraf.vertx.maven;
 
+import io.netty.handler.codec.http.HttpVersion;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Handler;
 import io.vertx.core.MultiMap;
 import io.vertx.core.buffer.Buffer;
+import io.vertx.core.http.HttpHeaders;
 import io.vertx.core.http.HttpServerResponse;
+import io.vertx.core.http.impl.MimeMapping;
 
 import java.io.DataInputStream;
 import java.io.File;
@@ -220,44 +223,49 @@ public class InjectingHttpServerResponse implements HttpServerResponse {
 
   @Override
   public HttpServerResponse sendFile(String filename, long offset, long length) {
-    Optional<Buffer> data = rewriteStaticHTMLFile(filename, offset, length);
-    if (data.isPresent()) {
-      wrapped.end(data.get());
-    } else {
-      wrapped.sendFile(filename, offset, length);
-    }
-    return this;
+    return rewriteStaticHTMLFile(filename, offset, length)
+      .map(buffer -> sendBufferForFile(filename, buffer)).orElseGet(() -> this);
   }
+
 
   @Override
   public HttpServerResponse sendFile(String filename, long offset, long length, Handler<AsyncResult<Void>> resultHandler) {
-    Optional<Buffer> data = rewriteStaticHTMLFile(filename, offset, length);
-    if (data.isPresent()) {
-      wrapped.end(data.get());
-      resultHandler.handle(new AsyncResult<Void>() {
-        @Override
-        public Void result() {
-          return null;
-        }
+    return rewriteStaticHTMLFile(filename, offset, length)
+      .map(buffer -> {
+        sendBufferForFile(filename, buffer);
+        resultHandler.handle(new AsyncResult<Void>() {
+          @Override
+          public Void result() {
+            return null;
+          }
 
-        @Override
-        public Throwable cause() {
-          return null;
-        }
+          @Override
+          public Throwable cause() {
+            return null;
+          }
 
-        @Override
-        public boolean succeeded() {
-          return true;
-        }
+          @Override
+          public boolean succeeded() {
+            return true;
+          }
 
-        @Override
-        public boolean failed() {
-          return false;
-        }
-      });
-    } else {
+          @Override
+          public boolean failed() {
+            return false;
+          }
+        });
+        return this;
+      })
+      .orElseGet(() -> {
       wrapped.sendFile(filename, offset, length, resultHandler);
-    }
+      return this;
+    });
+  }
+
+  private HttpServerResponse sendBufferForFile(String filename, Buffer buffer) {
+    prepareHeaders(buffer);
+    setContentType(filename);
+    wrapped.end(buffer);
     return this;
   }
 
@@ -293,6 +301,22 @@ public class InjectingHttpServerResponse implements HttpServerResponse {
     return this;
   }
 
+  private void setContentType(String filename) {
+    int li = filename.lastIndexOf('.');
+    if (li != -1 && li != filename.length() - 1) {
+      String ext = filename.substring(li + 1, filename.length());
+      String contentType = MimeMapping.getMimeTypeForExtension(ext);
+      if (contentType != null) {
+        putHeader(HttpHeaders.CONTENT_TYPE, contentType);
+      }
+    }
+  }
+
+  private void prepareHeaders(Buffer buffer) {
+    putHeader(HttpHeaders.CONTENT_LENGTH, String.valueOf(buffer.length()));
+    headers().set(HttpHeaders.CONNECTION, HttpHeaders.CLOSE);
+  }
+
   private String appendClose(String chunk) {
     return chunk + injectedScript;
   }
@@ -311,35 +335,38 @@ public class InjectingHttpServerResponse implements HttpServerResponse {
     String lowercase = filename.toLowerCase();
     if (lowercase.endsWith(".html") || lowercase.endsWith(".htm")) {
       File file = fileResolver.apply(filename);
-      try {
-        Buffer buffer = Buffer.buffer();
+      if (offset + length >= file.length()) {
+        try {
+          Buffer buffer = Buffer.buffer();
 
-        try (DataInputStream dis = new DataInputStream(new FileInputStream(file))) {
-          while (offset > 0) {
-            long max = Math.max(offset, (long) Integer.MAX_VALUE);
-            dis.skipBytes((int) max);
-            offset -= max;
-          }
-          byte[] bytes = new byte[2048];
+          try (DataInputStream dis = new DataInputStream(new FileInputStream(file))) {
+            // eat bytes
+            while (offset > 0) {
+              long max = Math.max(offset, (long) Integer.MAX_VALUE);
+              dis.skipBytes((int) max);
+              offset -= max;
+            }
+            byte[] bytes = new byte[2048];
 
-          while ((length > 0)) {
-            int read = dis.read(bytes);
-            if (read <= 0) {
-              length = 0;
-            } else {
-              length -= read;
-              buffer.appendBytes(bytes, 0, read);
+            while ((length > 0)) {
+              int read = dis.read(bytes);
+              if (read <= 0) {
+                length = 0;
+              } else {
+                length -= read;
+                buffer.appendBytes(bytes, 0, read);
+              }
             }
           }
+
+          buffer.appendString(injectedScript);
+          return of(buffer);
+        } catch (IOException e) {
+          e.printStackTrace();
+          return empty();
         }
-        buffer.appendString(injectedScript);
-        return of(buffer);
-      } catch (IOException e) {
-        e.printStackTrace();
-        return empty();
       }
-    } else {
-      return empty();
     }
+    return empty();
   }
 }

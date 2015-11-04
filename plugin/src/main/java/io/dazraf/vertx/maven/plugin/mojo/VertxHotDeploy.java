@@ -33,6 +33,9 @@ public class VertxHotDeploy extends AbstractMojo {
   @Parameter(property = "configFile")
   private String configFile = null;
 
+  @Parameter(property = "liveHttpReload")
+  private boolean liveHttpReload = false;
+
   /**
    * The enclosing project.
    */
@@ -49,7 +52,7 @@ public class VertxHotDeploy extends AbstractMojo {
         project.getResources().stream().map(Resource::getDirectory)
       ).collect(Collectors.toList());
       File pomFile = project.getFile();
-      HotDeploy.run(pomFile, verticleClassName, classPath, ofNullable(configFile), watchedPaths);
+      HotDeploy.run(pomFile, verticleClassName, classPath, ofNullable(configFile), watchedPaths, liveHttpReload);
     } catch (Exception e) {
       log.error(e);
       throw new MojoExecutionException("Failed to startup hot redeploy", e);

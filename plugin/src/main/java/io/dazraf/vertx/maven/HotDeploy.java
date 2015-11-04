@@ -4,7 +4,6 @@ import io.vertx.core.eventbus.MessageProducer;
 import io.vertx.core.json.JsonObject;
 import org.apache.maven.model.io.xpp3.MavenXpp3Reader;
 import org.apache.maven.project.MavenProject;
-import org.codehaus.plexus.util.xml.pull.XmlPullParserException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import rx.Observable;
@@ -30,8 +29,8 @@ public class HotDeploy {
 
   private static final Logger logger = LoggerFactory.getLogger(HotDeploy.class);
   private final String verticalClassName;
-  private final VerticleDeployer vertxManager = new VerticleDeployer();
-  private final MessageProducer<JsonObject> statusProducer = vertxManager.createEventProducer();
+  private final VerticleDeployer verticleDeployer;
+  private final MessageProducer<JsonObject> statusProducer;
   private final AtomicReference<Closeable> currentDeployment = new AtomicReference<>();
   private final List<String> classPaths;
   private final Optional<String> config;
@@ -39,13 +38,25 @@ public class HotDeploy {
   private final File pomFile;
   private long startTime;
 
-  public static void run(File pomFile, String verticleClassName, List<String> classPaths, Optional<String> config, List<String> sourcePaths
+  public static void run(File pomFile,
+                         String verticleClassName,
+                         List<String> classPaths,
+                         Optional<String> config,
+                         List<String> sourcePaths,
+                         boolean liveHttpReload
   ) throws Exception {
     logger.info("Running HOTDEPLOY with {}", verticleClassName);
-    new HotDeploy(pomFile, verticleClassName, classPaths, config, sourcePaths).run();
+    new HotDeploy(pomFile, verticleClassName, classPaths, config, sourcePaths, liveHttpReload).run();
   }
 
-  private HotDeploy(File pomFile, String clazzName, List<String> classPaths, Optional<String> config, List<String> sourcePaths) throws Exception {
+  private HotDeploy(File pomFile,
+                    String clazzName,
+                    List<String> classPaths,
+                    Optional<String> config,
+                    List<String> sourcePaths,
+                    boolean liveHttpReload) throws Exception {
+    this.verticleDeployer = new VerticleDeployer(liveHttpReload);
+    this.statusProducer = verticleDeployer.createEventProducer();
     this.pomFile = pomFile;
     this.verticalClassName = clazzName;
     this.classPaths = classPaths;
@@ -67,7 +78,7 @@ public class HotDeploy {
     logger.info("shutting down ...");
     sendStatus(DeployStatus.STOPPED);
     subscription.unsubscribe();
-    vertxManager.close();
+    verticleDeployer.close();
     logger.info("done");
   }
 
@@ -153,7 +164,7 @@ public class HotDeploy {
       // deploy
       try {
         logger.info("Starting deployment");
-        Closeable closeable =  vertxManager.deploy(verticalClassName, classPaths, config);
+        Closeable closeable =  verticleDeployer.deploy(verticalClassName, classPaths, config);
         sendStatus(DeployStatus.DEPLOYED);
         return closeable;
       } catch (Throwable e) {

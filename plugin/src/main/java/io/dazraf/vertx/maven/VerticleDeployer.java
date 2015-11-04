@@ -27,7 +27,7 @@ import java.util.concurrent.atomic.AtomicReference;
 
 public class VerticleDeployer implements Closeable {
   private static final Logger logger = LoggerFactory.getLogger(VerticleDeployer.class);
-  private final Vertx vertx = new VertxWrapper(new VertxOptions().setBlockedThreadCheckInterval(3_600_000));
+  private final Vertx vertx;
   private AtomicLong nextIsolationGroup = new AtomicLong(1);
 
   static {
@@ -37,8 +37,13 @@ public class VerticleDeployer implements Closeable {
     System.setProperty("vertx.disableFileCaching", "true");
   }
 
-  public VerticleDeployer() {
-    vertx.deployVerticle(new WebContainer());
+  public VerticleDeployer(boolean hotHttpServer) {
+    if (hotHttpServer) {
+      this.vertx = new VertxWrapper(new VertxOptions().setBlockedThreadCheckInterval(3_600_000));
+      vertx.deployVerticle(new WebContainer());
+    } else {
+      this.vertx = Vertx.vertx();
+    }
   }
 
   public MessageProducer<JsonObject> createEventProducer() {
@@ -101,6 +106,7 @@ public class VerticleDeployer implements Closeable {
   private DeploymentOptions assignConfig(List<String> classPaths, Optional<String> config, DeploymentOptions deploymentOptions) throws IOException {
     if (config.isPresent()) {
       JsonObject jsonConfig = loadConfig(classPaths, config.get());
+      jsonConfig.put("devmode", true);
       deploymentOptions.setConfig(jsonConfig);
     }
     return deploymentOptions;
