@@ -1,6 +1,5 @@
 package io.dazraf.vertx.maven;
 
-import io.netty.handler.codec.http.HttpVersion;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Handler;
 import io.vertx.core.MultiMap;
@@ -336,37 +335,40 @@ public class InjectingHttpServerResponse implements HttpServerResponse {
     if (lowercase.endsWith(".html") || lowercase.endsWith(".htm")) {
       File file = fileResolver.apply(filename);
       if (offset + length >= file.length()) {
-        try {
-          Buffer buffer = Buffer.buffer();
-
-          try (DataInputStream dis = new DataInputStream(new FileInputStream(file))) {
-            // eat bytes
-            while (offset > 0) {
-              long max = Math.max(offset, (long) Integer.MAX_VALUE);
-              dis.skipBytes((int) max);
-              offset -= max;
-            }
-            byte[] bytes = new byte[2048];
-
-            while ((length > 0)) {
-              int read = dis.read(bytes);
-              if (read <= 0) {
-                length = 0;
-              } else {
-                length -= read;
-                buffer.appendBytes(bytes, 0, read);
-              }
-            }
-          }
-
-          buffer.appendString(injectedScript);
-          return of(buffer);
-        } catch (IOException e) {
-          e.printStackTrace();
-          return empty();
-        }
+        return rewriteStaticHTMLFile(file, offset, length);
       }
     }
     return empty();
+  }
+
+  private Optional<Buffer> rewriteStaticHTMLFile(File file, long offset, long length) {
+    try {
+      Buffer buffer = Buffer.buffer();
+
+      try (DataInputStream dis = new DataInputStream(new FileInputStream(file))) {
+        // eat bytes
+        while (offset > 0) {
+          long max = Math.max(offset, (long) Integer.MAX_VALUE);
+          dis.skipBytes((int) max);
+          offset -= max;
+        }
+        byte[] bytes = new byte[2048];
+
+        while ((length > 0)) {
+          int read = dis.read(bytes);
+          if (read <= 0) {
+            length = 0;
+          } else {
+            length -= read;
+            buffer.appendBytes(bytes, 0, read);
+          }
+        }
+      }
+      buffer.appendString(injectedScript);
+      return of(buffer);
+    } catch (IOException e) {
+      e.printStackTrace();
+      return empty();
+    }
   }
 }
