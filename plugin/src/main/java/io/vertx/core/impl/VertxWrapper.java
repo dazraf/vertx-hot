@@ -1,6 +1,5 @@
 package io.vertx.core.impl;
 
-import com.google.common.io.ByteStreams;
 import io.dazraf.vertx.maven.HttpServerRequestWrapper;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Handler;
@@ -12,13 +11,8 @@ import io.vertx.core.http.HttpServerOptions;
 import io.vertx.core.http.HttpServerRequest;
 import io.vertx.core.http.impl.HttpServerImpl;
 import io.vertx.ext.web.Router;
-import io.vertx.ext.web.handler.StaticHandler;
-import io.vertx.ext.web.impl.RoutingContextImpl;
 
 import java.io.*;
-import java.net.URL;
-import java.net.URLClassLoader;
-import java.net.URLDecoder;
 
 public class VertxWrapper extends VertxImpl {
   private static final String BASE_API_PATH = "\\/__vertx_hot\\/(.*)";
