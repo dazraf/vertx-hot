@@ -1,5 +1,11 @@
 package io.dazraf.service;
 
+import de.flapdoodle.embed.mongo.MongodExecutable;
+import de.flapdoodle.embed.mongo.MongodProcess;
+import de.flapdoodle.embed.mongo.MongodStarter;
+import de.flapdoodle.embed.mongo.config.IMongodConfig;
+import de.flapdoodle.embed.mongo.config.MongodConfigBuilder;
+import de.flapdoodle.embed.mongo.distribution.Version;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.DeploymentOptions;
 import io.vertx.core.Vertx;
@@ -21,6 +27,7 @@ public class App extends AbstractVerticle {
   private static final Logger logger = LoggerFactory.getLogger(App.class);
   private HttpServer server;
   private AppController appController;
+  private MongodProcess mongodProcess;
 
   // Convenience method so you can run it in your IDE
   public static void main(String[] args) throws Exception {
@@ -39,9 +46,21 @@ public class App extends AbstractVerticle {
   }
 
   @Override
-  public void start() throws InterruptedException {
+  public void start() throws InterruptedException, IOException {
     int port = config().getInteger("port", 8080);
+    // this flag gets set by vertx:hot
+    boolean devMode = config().getBoolean("devmode");
+    if (devMode) {
+//      MongodStarter starter = MongodStarter.getDefaultInstance();
+//      IMongodConfig config = new MongodConfigBuilder()
+//        .version(Version.Main.PRODUCTION)
+//        .build();
+//      MongodExecutable prepare = starter.prepare(config);
+//      this.mongodProcess = prepare.start();
 
+    } else {
+      // we expect a local mongodb instance
+    }
     appController = new AppController();
 
     logger.info("Starting server on port {}", port);
@@ -67,6 +86,10 @@ public class App extends AbstractVerticle {
     logger.info("stopping");
     appController.close();
     server.close();
+    if (mongodProcess != null) {
+      mongodProcess.stop();
+      mongodProcess = null;
+    }
   }
 
   private Router createRoutes(Vertx vertx) {

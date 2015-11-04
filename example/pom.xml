@@ -91,6 +91,12 @@
       <version>2.1.4</version>
     </dependency>
 
+    <dependency>
+      <groupId>de.flapdoodle.embed</groupId>
+      <artifactId>de.flapdoodle.embed.mongo</artifactId>
+      <version>1.50.0</version>
+    </dependency>
+
   </dependencies>
 
   <build>
@@ -113,6 +119,7 @@
         <configuration>
           <verticleClassName>io.dazraf.service.App</verticleClassName>
           <configFile>config.json</configFile>
+          <liveHttpReload>true</liveHttpReload>
         </configuration>
       </plugin>
 
