@@ -40,7 +40,7 @@ public class VertxHotDeploy extends AbstractMojo {
    * The enclosing project.
    */
   @Parameter(defaultValue = "${project}", readonly = true)
-  protected MavenProject project;
+  private MavenProject project;
 
   @Override
   public void execute() throws MojoExecutionException, MojoFailureException {

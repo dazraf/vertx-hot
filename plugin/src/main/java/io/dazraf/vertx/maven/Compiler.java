@@ -14,7 +14,7 @@ import java.util.stream.Collectors;
 
 public class Compiler {
   private static final Logger logger = LoggerFactory.getLogger(Compiler.class);
-  private static Pattern pattern = Pattern.compile("\\[ERROR\\] [^:]+:\\[\\d+,\\d+\\].*");
+  private static final Pattern pattern = Pattern.compile("\\[ERROR\\] [^:]+:\\[\\d+,\\d+\\].*");
 
   public static void compile(File pomFile) throws Exception {
     InvocationRequest request = new DefaultInvocationRequest();

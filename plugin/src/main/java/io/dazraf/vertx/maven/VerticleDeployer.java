@@ -28,7 +28,7 @@ import java.util.concurrent.atomic.AtomicReference;
 public class VerticleDeployer implements Closeable {
   private static final Logger logger = LoggerFactory.getLogger(VerticleDeployer.class);
   private final Vertx vertx;
-  private AtomicLong nextIsolationGroup = new AtomicLong(1);
+  private final AtomicLong nextIsolationGroup = new AtomicLong(1);
 
   static {
     // We set this property to prevent Vert.x caching files loaded from the classpath on disk
@@ -120,16 +120,13 @@ public class VerticleDeployer implements Closeable {
         throw new RuntimeException("error creating URL from path: " + p, e);
       }
     }).toArray(URL[]::new);
-    URLClassLoader classLoader = new URLClassLoader(urls);
-    try {
+    try (URLClassLoader classLoader = new URLClassLoader(urls)) {
       try (InputStream resourceAsStream = classLoader.getResourceAsStream(configFile)) {
         try (Scanner scanner = new Scanner(resourceAsStream, "UTF-8")) {
           String config = scanner.useDelimiter("\\A").next();
           return new JsonObject(config);
         }
       }
-    } finally {
-      classLoader.close();
     }
   }
 }

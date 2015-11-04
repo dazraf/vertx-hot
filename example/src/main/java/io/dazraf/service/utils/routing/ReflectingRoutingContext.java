@@ -152,7 +152,7 @@ class ReflectingRoutingContext extends RoutingContextDecorator {
     };
   }
 
-  private static Map<Class<?>, Method[]> cachedClasses = new ConcurrentHashMap<>();
+  private static final Map<Class<?>, Method[]> cachedClasses = new ConcurrentHashMap<>();
 
   private static Method[] getClassGetters(Object data) {
     return cachedClasses.computeIfAbsent(data.getClass(),
