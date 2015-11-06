@@ -12,6 +12,7 @@
 4. [Instructions](#instructions)
 5. [Example Project](#example-project)
 6. [Design Notes](#design-notes)
+7. [Contributors](#contributors)
 
 ## Background
 
@@ -81,17 +82,27 @@ Or, in your favourite IDE:
 Press either: `<Enter>` or  `Ctrl-C`.
 
 ## Example Project
-There is a simple test project under `example`.
-To run it: 
+There are two simple test project under `example1` and `example2`. 
+The latter is an adaption of the excellent [ToDo App](http://scotch.io/tutorials/javascript/creating-a-single-page-todo-app-with-node-and-angular)
+by [Scotch](http://scotch.io), with a vert.x reactive flavour.
 
-1. After running `mvn clean install` in the parent directory
-2. `cd example`
-3. `mvn vertx:hot`
-4. Browse to [http://localhost:8888](http://localhost:8888)
-5. Open up the project in your favourite IDE/Editor and try changing some code 
-6. Watch the command line for the rebuild and reload into the browser (would be neat if we could auto-reload in the browser ...)
+To run either: 
+
+1. You will need [bower](http://bower.io) available on your path.
+2. After running `mvn clean install` in the parent directory
+3. `cd example1` or `cd example2`
+4. `mvn vertx:hot`
+5. Browse to [http://localhost:8888](http://localhost:8888)
+6. Open up the project in your favourite IDE/Editor and try changing some code 
+7. Watch the command line for the rebuild and reload into the browser (would be neat if we could auto-reload in the browser ...)
 
 ## Design Notes
 
 ![sequence diagram](design.png)
+
+## Contributors
+
+With many thanks:
+
+* [illuminace](https://github.com/illuminace)
 
