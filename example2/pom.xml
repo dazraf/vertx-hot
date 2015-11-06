@@ -47,6 +47,7 @@
   <build>
     <plugins>
 
+      <!-- vertx:hot plugin -->
       <plugin>
         <groupId>io.dazraf</groupId>
         <artifactId>vertx-hot-maven-plugin</artifactId>
@@ -67,6 +68,7 @@
         </configuration>
       </plugin>
 
+      <!-- bower components are bound to the process-resources phase -->
       <plugin>
         <groupId>org.codehaus.mojo</groupId>
         <artifactId>exec-maven-plugin</artifactId>
