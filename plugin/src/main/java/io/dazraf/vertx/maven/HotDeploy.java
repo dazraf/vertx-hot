@@ -2,7 +2,6 @@ package io.dazraf.vertx.maven;
 
 import io.vertx.core.eventbus.MessageProducer;
 import io.vertx.core.json.JsonObject;
-import org.apache.maven.model.io.xpp3.MavenXpp3Reader;
 import org.apache.maven.project.MavenProject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -19,6 +18,8 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
 public class HotDeploy {
+  private final MavenProject project;
+
   public enum DeployStatus {
     COMPILING,
     DEPLOYING,
@@ -32,34 +33,30 @@ public class HotDeploy {
   private final VerticleDeployer verticleDeployer;
   private final MessageProducer<JsonObject> statusProducer;
   private final AtomicReference<Closeable> currentDeployment = new AtomicReference<>();
-  private final List<String> classPaths;
   private final Optional<String> config;
   private final List<String> sourcePaths;
-  private final File pomFile;
+  private final Compiler compiler = new Compiler();
   private long startTime;
 
-  public static void run(File pomFile,
+  public static void run(MavenProject project,
+                         List<String> watchedPaths,
                          String verticleClassName,
-                         List<String> classPaths,
                          Optional<String> config,
-                         List<String> sourcePaths,
                          boolean liveHttpReload
   ) throws Exception {
     logger.info("Running HOTDEPLOY with {}", verticleClassName);
-    new HotDeploy(pomFile, verticleClassName, classPaths, config, sourcePaths, liveHttpReload).run();
+    new HotDeploy(project, watchedPaths, verticleClassName, config, liveHttpReload).run();
   }
 
-  private HotDeploy(File pomFile,
-                    String clazzName,
-                    List<String> classPaths,
-                    Optional<String> config,
+  private HotDeploy(MavenProject project,
                     List<String> sourcePaths,
-                    boolean liveHttpReload) throws Exception {
+                    String verticleClassName,
+                    Optional<String> config,
+                    boolean liveHttpReload) {
     this.verticleDeployer = new VerticleDeployer(liveHttpReload);
     this.statusProducer = verticleDeployer.createEventProducer();
-    this.pomFile = pomFile;
-    this.verticalClassName = clazzName;
-    this.classPaths = classPaths;
+    this.project = project;
+    this.verticalClassName = verticleClassName;
     this.config = config;
     this.sourcePaths = sourcePaths;
   }
@@ -124,9 +121,9 @@ public class HotDeploy {
     markFileDetected();
     logger.info("Compiling...");
     sendStatus(DeployStatus.COMPILING);
+
     try {
-      Compiler.compile(pomFile);
-      loadApp(classPaths);
+      loadApp(compiler.compile(project));
     } catch (Exception e) {
       logger.error("error", e);
       sendStatus(e);
@@ -164,7 +161,7 @@ public class HotDeploy {
       // deploy
       try {
         logger.info("Starting deployment");
-        Closeable closeable =  verticleDeployer.deploy(verticalClassName, classPaths, config);
+        Closeable closeable = verticleDeployer.deploy(verticalClassName, classPaths, config);
         sendStatus(DeployStatus.DEPLOYED);
         return closeable;
       } catch (Throwable e) {
@@ -184,16 +181,7 @@ public class HotDeploy {
   private void sendStatus(Throwable e) {
     statusProducer.write(
       new JsonObject()
-      .put("status", DeployStatus.FAILED.toString())
-      .put("cause", e.getMessage()));
-  }
-
-  private List<Path> getClassPath(File pomFile) throws Exception {
-    MavenXpp3Reader mavenReader = new MavenXpp3Reader();
-    FileReader reader = new FileReader(pomFile);
-    org.apache.maven.model.Model model = mavenReader.read(reader);
-    model.setPomFile(pomFile);
-    MavenProject project = new MavenProject(model);
-    return null;
+        .put("status", DeployStatus.FAILED.toString())
+        .put("cause", e.getMessage()));
   }
 }

@@ -17,15 +17,12 @@ import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Optional;
-import java.util.Scanner;
+import java.util.*;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 
-public class VerticleDeployer implements Closeable {
+class VerticleDeployer implements Closeable {
   private static final Logger logger = LoggerFactory.getLogger(VerticleDeployer.class);
   private final Vertx vertx;
   private final AtomicLong nextIsolationGroup = new AtomicLong(1);
@@ -99,7 +96,7 @@ public class VerticleDeployer implements Closeable {
     DeploymentOptions result = new DeploymentOptions()
       .setExtraClasspath(classPaths)
       .setIsolationGroup(Long.toString(nextIsolationGroup.getAndIncrement()))
-      .setIsolatedClasses(Arrays.asList("*"));
+      .setIsolatedClasses(Collections.singletonList("*"));
     return assignConfig(classPaths, config, result);
   }
 

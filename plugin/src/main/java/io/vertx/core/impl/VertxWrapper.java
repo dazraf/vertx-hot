@@ -29,7 +29,7 @@ public class VertxWrapper extends VertxImpl {
   //
   /**
    * the http server interceptor has the following responsibilities
-   * 1. any request to {@link BASE_API_PATH} is routed to a file server for late loaded artifacts
+   * 1. any request to {@link VertxWrapper#BASE_API_PATH} is routed to a file server for late loaded artifacts
    * 2. all other requests are dispatched accordingly to the requestHandler of the application
    *    but passing through a {@link HttpServerRequestWrapper} to inject dependencies on late-loaded artifacts
    */

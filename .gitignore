@@ -7,6 +7,9 @@
 **/.settings/**
 **/.DS_Store
 **/*.log
-**/*.db
+example/db/**
+**/src/main/resources/bower_components
+**/src/main/resources/bower_components/**
+
 
 

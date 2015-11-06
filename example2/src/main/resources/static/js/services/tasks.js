@@ -1,0 +1,17 @@
+angular.module('taskService', [])
+  .factory('Tasks', function ($http) {
+    return {
+      get: function() {
+        return $http.get("/api/task");
+      },
+      create : function(task) {
+        return $http.post("/api/task", task);
+      },
+      delete : function(id) {
+        return $http.delete("/api/task/" + id);
+      },
+      done: function(id, done) {
+        return $http.put("/api/task/" + id, { done: done });
+      }
+    }
+  })

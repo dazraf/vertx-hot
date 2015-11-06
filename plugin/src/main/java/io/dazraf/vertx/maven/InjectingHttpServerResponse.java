@@ -18,7 +18,7 @@ import java.util.stream.StreamSupport;
 
 import static java.util.Optional.*;
 
-public class InjectingHttpServerResponse implements HttpServerResponse {
+class InjectingHttpServerResponse implements HttpServerResponse {
   private final HttpServerResponse wrapped;
   private final String injectedScript = "<script src='/__vertx_hot/scripts/connection.js'></script>";
   private boolean htmlDetected = false;
