@@ -115,6 +115,7 @@ public class App extends AbstractVerticle {
         err -> response.setStatusCode(500).setStatusMessage(err.getMessage()).end(),
         () -> logger.info("get done")
       );
+
     }).produces("application/json");
   }
 
@@ -130,8 +131,7 @@ public class App extends AbstractVerticle {
           sendResultAndNotification(response, jsonString, Operation.Create);
         },
         err -> response.setStatusCode(500).setStatusMessage(err.getMessage()).end());
-    })
-      .consumes("application/json")
+    }).consumes("application/json")
       .produces("application/json");
   }
 

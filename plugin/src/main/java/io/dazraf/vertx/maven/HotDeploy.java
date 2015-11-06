@@ -139,7 +139,8 @@ public class HotDeploy {
 
   private void markRedeployed() {
     long nanos = System.nanoTime() - startTime;
-    logger.info("Compiled and redeployed in {}s", String.format("%1.3f", nanos * 1E-9));
+    String status = currentDeployment.get() != null ? "Compiled and redeployed" : "Deployment failed";
+    logger.info("{} in {}s", status, String.format("%1.3f", nanos * 1E-9));
   }
 
   private void loadApp(List<String> classPaths) {

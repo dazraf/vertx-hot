@@ -1,6 +1,5 @@
 package io.dazraf.vertx.maven;
 
-import io.vertx.core.AsyncResult;
 import io.vertx.core.DeploymentOptions;
 import io.vertx.core.Vertx;
 import io.vertx.core.VertxOptions;
@@ -17,7 +16,10 @@ import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
-import java.util.*;
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
+import java.util.Scanner;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
@@ -64,32 +66,37 @@ class VerticleDeployer implements Closeable {
 
   public Closeable deploy(String verticleClassName, List<String> classPaths, Optional<String> config) throws Throwable {
     DeploymentOptions deploymentOptions = createIsolatingDeploymentOptions(classPaths, config);
-    final String verticleId = deployVerticle(verticleClassName, deploymentOptions);
-    return () -> {
-      try {
-        CountDownLatch closeLatch = new CountDownLatch(1);
-        vertx.undeploy(verticleId, ar -> closeLatch.countDown());
-        closeLatch.await();
-      } catch (Exception e) {
-        logger.error("on closing verticle", e);
-      }
+    AtomicReference<String> verticleId = deployVerticle(verticleClassName, deploymentOptions);
+    return verticleId.get() == null ? null : () -> {
+        try {
+          CountDownLatch closeLatch = new CountDownLatch(1);
+          vertx.undeploy(verticleId.get(), ar -> closeLatch.countDown());
+          closeLatch.await();
+        } catch (Exception e) {
+          logger.error("on closing verticle", e);
+        }
     };
   }
 
-  private String deployVerticle(String verticleClassName, DeploymentOptions deploymentOptions) throws Throwable {
-    AtomicReference<AsyncResult<String>> result = new AtomicReference<>();
+  private AtomicReference<String> deployVerticle(String verticleClassName, DeploymentOptions deploymentOptions) throws Throwable {
+    AtomicReference<String> verticleId = new AtomicReference<>();
     CountDownLatch latch = new CountDownLatch(1);
-    vertx.deployVerticle(verticleClassName, deploymentOptions, ar -> {
-      result.set(ar);
-      latch.countDown();
-    });
-    latch.await();
-    AsyncResult<String> r = result.get();
-    if (r.failed()) {
-      throw r.cause();
-    } else {
-      return r.result();
+    try {
+      vertx.deployVerticle(verticleClassName, deploymentOptions, ar -> {
+        verticleId.set(ar.result());
+        latch.countDown();
+      });
+      latch.await();
+    } catch(Error err) {
+      // Vertx throws a generic java.lang.Error on Verticle compilation failure
+      if (!(err instanceof VirtualMachineError)) {
+        logger.error("on deploying verticle", err);
+        verticleId.set(null);
+      } else {
+        throw err;
+      }
     }
+    return verticleId;
   }
 
   private DeploymentOptions createIsolatingDeploymentOptions(List<String> classPaths, Optional<String> config) throws IOException {
