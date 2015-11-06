@@ -8,13 +8,11 @@ angular.module('taskController', [])
 		var ws = new WebSocket("ws://" + hostAndPort + "/api/notifications");
 
 		ws.onopen = function() {
-			console.log("connected");
 		}
 		ws.onmessage = function(message) {
 			listener(JSON.parse(message.data));
 		}
 		ws.onclose = function() {
-			console.log("closed");
 		}
 
 		// GET =====================================================================
@@ -75,7 +73,6 @@ angular.module('taskController', [])
 		}
 
 		function listener(data) {
-			console.log(data);
 			$scope.$apply(function() {
 				if (data.op === "Delete") {
 					internalDelete(data.value.id);
