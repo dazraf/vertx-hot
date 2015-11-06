@@ -1,0 +1,1 @@
+angular.module('taskApp', ['taskController', 'taskService']);

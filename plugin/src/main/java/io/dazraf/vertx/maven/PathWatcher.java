@@ -6,28 +6,47 @@ import com.darylteo.nio.ThreadPoolDirectoryWatchService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import rx.Observable;
+import rx.functions.Action0;
 import rx.subjects.PublishSubject;
 
+import java.io.File;
+import java.io.IOException;
 import java.nio.file.Path;
+import java.util.function.Consumer;
+import java.util.function.Function;
 
-public class PathWatcher {
+class PathWatcher {
   private final static Logger logger = LoggerFactory.getLogger(PathWatcher.class);
 
-  public static Observable<Path> create(Path path) throws Exception {
-    ThreadPoolDirectoryWatchService factory = new ThreadPoolDirectoryWatchService();
-
+  public static Observable<Path> create(final Path path) throws Exception {
     logger.info("Watching: {}", path);
-    DirectoryWatcher directoryWatcher = factory.newWatcher(path);
 
     PublishSubject<Path> subject = PublishSubject.create();
+
+    if (path.toFile().isDirectory()) {
+      subject.doOnSubscribe(createDirectoryWatcher(path, subject::onNext));
+    } else {
+      subject.doOnSubscribe(createDirectoryWatcher(path.getParent(), changedPath -> {
+        if (path.getParent().resolve(changedPath).equals(path)) {
+          subject.onNext(changedPath);
+        }
+      }));
+    }
+    return subject;
+  }
+
+  private static Action0 createDirectoryWatcher(Path path, Consumer<Path> callback) throws IOException {
+    ThreadPoolDirectoryWatchService factory = new ThreadPoolDirectoryWatchService();
+    DirectoryWatcher directoryWatcher = factory.newWatcher(path);
     DirectoryChangedSubscriber directoryChangedSubscriber = new DirectoryChangedSubscriber() {
       @Override
       public void directoryChanged(DirectoryWatcher directoryWatcher, Path changedPath) {
-        subject.onNext(changedPath);
+        callback.accept(changedPath);
       }
     };
+
     directoryWatcher.subscribe(directoryChangedSubscriber);
-    subject.doOnUnsubscribe(() -> {
+    return () -> {
       logger.info("... unsubscribing from directory watch");
       directoryWatcher.unsubscribe(directoryChangedSubscriber);
       try {
@@ -35,7 +54,6 @@ public class PathWatcher {
       } catch (Exception e) {
         logger.error("error in shutting down directory watch factory", e);
       }
-    });
-    return subject;
+    };
   }
 }

@@ -1,8 +1,19 @@
+language: java
+
 sudo: false
+
 cache:
   directories:
   - $HOME/.m2
-language: java
+
 jdk:
   - oraclejdk8
+
+env:
+  - NODE_VERSION=4 CC=clang CXX=clang++
+
+before_install:
+  - nvm install $NODE_VERSION
+  - npm install -g bower
+
 script: mvn clean install

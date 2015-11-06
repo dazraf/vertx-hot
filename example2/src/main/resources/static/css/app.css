@@ -1,0 +1,24 @@
+@font-face {
+    font-family: lobster;
+    src: url(/fonts/Lobster/Lobster-Regular.ttf);
+}
+
+@font-face {
+    font-family: robotto;
+    src: url(/fonts/Roboto/Roboto-Regular.ttf);
+}
+
+html 					{ overflow-y:scroll; }
+body 					{ padding-top:50px; }
+h1 {
+  font-family: lobster;
+}
+#task-list 				{
+  margin-bottom:30px;
+  font-family: robotto;
+  font-size: large;
+}
+#task-form 	{
+  margin-bottom:50px;
+  font-family: robotto;
+}

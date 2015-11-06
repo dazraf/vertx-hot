@@ -3,6 +3,8 @@ package io.dazraf.vertx.maven;
 import io.vertx.core.DeploymentOptions;
 import io.vertx.core.Vertx;
 import io.vertx.core.VertxOptions;
+import io.vertx.core.eventbus.MessageProducer;
+import io.vertx.core.impl.VertxWrapper;
 import io.vertx.core.json.JsonObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -14,7 +16,7 @@ import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.Scanner;
@@ -22,16 +24,29 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 
-public class VerticleDeployer implements Closeable {
+class VerticleDeployer implements Closeable {
   private static final Logger logger = LoggerFactory.getLogger(VerticleDeployer.class);
-  private final Vertx vertx = Vertx.vertx(new VertxOptions().setBlockedThreadCheckInterval(3_600_000));
-  private AtomicLong nextIsolationGroup = new AtomicLong(1);
+  private final Vertx vertx;
+  private final AtomicLong nextIsolationGroup = new AtomicLong(1);
 
   static {
     // We set this property to prevent Vert.x caching files loaded from the classpath on disk
-    // This means if you edit the static files in your IDE then the next time they are served the new ones will
+    // This means if you edit the template files in your IDE then the next time they are served the new ones will
     // be served without you having to restart the main()
     System.setProperty("vertx.disableFileCaching", "true");
+  }
+
+  public VerticleDeployer(boolean hotHttpServer) {
+    if (hotHttpServer) {
+      this.vertx = new VertxWrapper(new VertxOptions().setBlockedThreadCheckInterval(3_600_000));
+      vertx.deployVerticle(new WebContainer());
+    } else {
+      this.vertx = Vertx.vertx();
+    }
+  }
+
+  public MessageProducer<JsonObject> createEventProducer() {
+    return vertx.eventBus().publisher(WebContainer.TOPIC);
   }
 
   public void close() {
@@ -49,7 +64,7 @@ public class VerticleDeployer implements Closeable {
     }
   }
 
-  public Closeable deploy(String verticleClassName, List<String> classPaths, Optional<String> config) throws Exception {
+  public Closeable deploy(String verticleClassName, List<String> classPaths, Optional<String> config) throws Throwable {
     DeploymentOptions deploymentOptions = createIsolatingDeploymentOptions(classPaths, config);
     AtomicReference<String> verticleId = deployVerticle(verticleClassName, deploymentOptions);
     return verticleId.get() == null ? null : () -> {
@@ -63,7 +78,7 @@ public class VerticleDeployer implements Closeable {
     };
   }
 
-  private AtomicReference<String> deployVerticle(String verticleClassName, DeploymentOptions deploymentOptions) throws InterruptedException {
+  private AtomicReference<String> deployVerticle(String verticleClassName, DeploymentOptions deploymentOptions) throws Throwable {
     AtomicReference<String> verticleId = new AtomicReference<>();
     CountDownLatch latch = new CountDownLatch(1);
     try {
@@ -88,13 +103,14 @@ public class VerticleDeployer implements Closeable {
     DeploymentOptions result = new DeploymentOptions()
       .setExtraClasspath(classPaths)
       .setIsolationGroup(Long.toString(nextIsolationGroup.getAndIncrement()))
-      .setIsolatedClasses(Arrays.asList("*"));
+      .setIsolatedClasses(Collections.singletonList("*"));
     return assignConfig(classPaths, config, result);
   }
 
   private DeploymentOptions assignConfig(List<String> classPaths, Optional<String> config, DeploymentOptions deploymentOptions) throws IOException {
     if (config.isPresent()) {
       JsonObject jsonConfig = loadConfig(classPaths, config.get());
+      jsonConfig.put("devmode", true);
       deploymentOptions.setConfig(jsonConfig);
     }
     return deploymentOptions;
@@ -108,16 +124,13 @@ public class VerticleDeployer implements Closeable {
         throw new RuntimeException("error creating URL from path: " + p, e);
       }
     }).toArray(URL[]::new);
-    URLClassLoader classLoader = new URLClassLoader(urls);
-    try {
+    try (URLClassLoader classLoader = new URLClassLoader(urls)) {
       try (InputStream resourceAsStream = classLoader.getResourceAsStream(configFile)) {
         try (Scanner scanner = new Scanner(resourceAsStream, "UTF-8")) {
           String config = scanner.useDelimiter("\\A").next();
           return new JsonObject(config);
         }
       }
-    } finally {
-      classLoader.close();
     }
   }
 }

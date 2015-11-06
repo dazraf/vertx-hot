@@ -1,0 +1,24 @@
+{
+  "name": "example2",
+  "version": "1.0.0",
+  "homepage": "https://github.com/dazraf/vertx-hot",
+  "authors": [
+    "dazraf <farzad.pezeshkpour@gmail.com>"
+  ],
+  "description": "yet another todo app",
+  "main": "",
+  "moduleType": [],
+  "license": "MIT",
+  "private": true,
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "angular": "~1.4.7",
+    "bootstrap": "~3.3.5"
+  }
+}

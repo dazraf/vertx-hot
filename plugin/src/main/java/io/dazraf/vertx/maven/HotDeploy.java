@@ -1,5 +1,8 @@
 package io.dazraf.vertx.maven;
 
+import io.vertx.core.eventbus.MessageProducer;
+import io.vertx.core.json.JsonObject;
+import org.apache.maven.project.MavenProject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import rx.Observable;
@@ -15,26 +18,45 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
 public class HotDeploy {
-  private static final Logger logger = LoggerFactory.getLogger(HotDeploy.class);
-  private final String verticalClassName;
-  private final VerticleDeployer vertxManager = new VerticleDeployer();
-  private final AtomicReference<Closeable> currentDeployment = new AtomicReference<>();
-  private final List<String> classPaths;
-  private final Optional<String> config;
-  private final List<String> sourcePaths;
-  private final File pomFile;
-  private long startTime;
+  private final MavenProject project;
 
-  public static void run(File pomFile, String verticleClassName, List<String> classPaths, Optional<String> config, List<String> sourcePaths
-  ) throws Exception {
-    logger.info("Running HOTDEPLOY with {}", verticleClassName);
-    new HotDeploy(pomFile, verticleClassName, classPaths, config, sourcePaths).run();
+  public enum DeployStatus {
+    COMPILING,
+    DEPLOYING,
+    DEPLOYED,
+    FAILED,
+    STOPPED
   }
 
-  private HotDeploy(File pomFile, String clazzName, List<String> classPaths, Optional<String> config, List<String> sourcePaths) throws Exception {
-    this.pomFile = pomFile;
-    this.verticalClassName = clazzName;
-    this.classPaths = classPaths;
+  private static final Logger logger = LoggerFactory.getLogger(HotDeploy.class);
+  private final String verticalClassName;
+  private final VerticleDeployer verticleDeployer;
+  private final MessageProducer<JsonObject> statusProducer;
+  private final AtomicReference<Closeable> currentDeployment = new AtomicReference<>();
+  private final Optional<String> config;
+  private final List<String> sourcePaths;
+  private final Compiler compiler = new Compiler();
+  private long startTime;
+
+  public static void run(MavenProject project,
+                         List<String> watchedPaths,
+                         String verticleClassName,
+                         Optional<String> config,
+                         boolean liveHttpReload
+  ) throws Exception {
+    logger.info("Running HOTDEPLOY with {}", verticleClassName);
+    new HotDeploy(project, watchedPaths, verticleClassName, config, liveHttpReload).run();
+  }
+
+  private HotDeploy(MavenProject project,
+                    List<String> sourcePaths,
+                    String verticleClassName,
+                    Optional<String> config,
+                    boolean liveHttpReload) {
+    this.verticleDeployer = new VerticleDeployer(liveHttpReload);
+    this.statusProducer = verticleDeployer.createEventProducer();
+    this.project = project;
+    this.verticalClassName = verticleClassName;
     this.config = config;
     this.sourcePaths = sourcePaths;
   }
@@ -51,8 +73,9 @@ public class HotDeploy {
     waitForNewLine();
 
     logger.info("shutting down ...");
+    sendStatus(DeployStatus.STOPPED);
     subscription.unsubscribe();
-    vertxManager.close();
+    verticleDeployer.close();
     logger.info("done");
   }
 
@@ -96,9 +119,15 @@ public class HotDeploy {
 
   private void compileAndDeploy() {
     markFileDetected();
+    logger.info("Compiling...");
+    sendStatus(DeployStatus.COMPILING);
 
-    Compiler.compile(pomFile);
-    loadApp(classPaths);
+    try {
+      loadApp(compiler.compile(project));
+    } catch (Exception e) {
+      logger.error("error", e);
+      sendStatus(e);
+    }
 
     markRedeployed();
     printLastMessage();
@@ -117,6 +146,7 @@ public class HotDeploy {
   private void loadApp(List<String> classPaths) {
     // atomic
     currentDeployment.getAndUpdate(c -> {
+      sendStatus(DeployStatus.DEPLOYING);
       // if we have a deployment, shut it down
       if (c != null) {
         try {
@@ -132,11 +162,27 @@ public class HotDeploy {
       // deploy
       try {
         logger.info("Starting deployment");
-        return vertxManager.deploy(verticalClassName, classPaths, config);
-      } catch (Exception e) {
+        Closeable closeable = verticleDeployer.deploy(verticalClassName, classPaths, config);
+        sendStatus(DeployStatus.DEPLOYED);
+        return closeable;
+      } catch (Throwable e) {
+        sendStatus(e);
         logger.error("Error in deployment", e);
         return null;
       }
     });
+  }
+
+  private void sendStatus(DeployStatus deployStatus) {
+    statusProducer.write(
+      new JsonObject()
+        .put("status", deployStatus.toString()));
+  }
+
+  private void sendStatus(Throwable e) {
+    statusProducer.write(
+      new JsonObject()
+        .put("status", DeployStatus.FAILED.toString())
+        .put("cause", e.getMessage()));
   }
 }
