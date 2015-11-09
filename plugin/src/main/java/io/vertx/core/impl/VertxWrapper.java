@@ -1,6 +1,6 @@
 package io.vertx.core.impl;
 
-import io.dazraf.vertx.maven.HttpServerRequestWrapper;
+import io.dazraf.vertx.maven.web.HttpServerRequestWrapper;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
@@ -14,6 +14,18 @@ import io.vertx.ext.web.Router;
 
 import java.io.*;
 
+/**
+ * This class acts as an interceptor for HTTP server activity with {@link Vertx}
+ * In order to provide hot-reload of web pages
+ * It achieves this by two steps:
+ * 1. Provide a hidden http file server end point, http://[host:path]/__vertx_hot
+ * 2. ... which serves up a script with the hot reload functionality
+ * 3. Redirect all http to {@link HttpServerRequestWrapper} - the entry point of the logic to inject a script tag into
+ * any server html resources
+ *
+ * This class is in the {@code io.vertx.core.impl} package to gain access to the VertxImpl package level constructors
+ *
+ */
 public class VertxWrapper extends VertxImpl {
   private static final String BASE_API_PATH = "\\/__vertx_hot\\/(.*)";
   private final ClassLoader pluginClassloader = Thread.currentThread().getContextClassLoader();

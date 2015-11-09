@@ -98,6 +98,28 @@ To run either:
 
 ## Design Notes
 
+### Plugin Properties
+
+**Required**
+
+* `verticleClassName` - the fully-qualified reference to the top-level verticle of your application.
+
+**Optional**
+ 
+* `configFile` - the class path to the verticle configuration file. The configuration that is loaded will be decorated 
+with the property `devmode` set to `true`.
+
+* `liveHttpReload` - when set to `true`, any web pages served by the application verticles will reload automatically 
+  when the application is recompiled or when any static resources are updated. Default is `true`.
+  
+* `buildResources` - when set to `true`, any change to files under the resource directories will trigger a compile. 
+Use this if your resources generate sources. Default is `false`.
+
+* `notificationPort` - the websocket port for notifications to the browser, when used in conjunction with 
+`liveHttpReload` set to `true`. Default is `9999`. 
+ 
+### Sequence
+
 ![sequence diagram](design.png)
 
 ## Contributors

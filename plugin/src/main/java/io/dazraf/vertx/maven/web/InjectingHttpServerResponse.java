@@ -1,4 +1,4 @@
-package io.dazraf.vertx.maven;
+package io.dazraf.vertx.maven.web;
 
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Handler;
@@ -18,7 +18,7 @@ import java.util.stream.StreamSupport;
 
 import static java.util.Optional.*;
 
-class InjectingHttpServerResponse implements HttpServerResponse {
+public class InjectingHttpServerResponse implements HttpServerResponse {
   private final HttpServerResponse wrapped;
   private final String injectedScript = "<script src='/__vertx_hot/scripts/connection.js'></script>";
   private boolean htmlDetected = false;

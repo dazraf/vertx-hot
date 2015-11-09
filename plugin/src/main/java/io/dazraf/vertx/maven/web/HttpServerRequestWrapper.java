@@ -1,4 +1,4 @@
-package io.dazraf.vertx.maven;
+package io.dazraf.vertx.maven.web;
 
 import io.vertx.core.Handler;
 import io.vertx.core.MultiMap;

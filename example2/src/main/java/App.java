@@ -193,6 +193,7 @@ public class App extends AbstractVerticle {
   private void bindStaticFiles(Router router) {
     router.route().handler(
       StaticHandler.create()
+        .setCachingEnabled(!config().containsKey("devmode"))
         .setWebRoot("static"));
   }
 
