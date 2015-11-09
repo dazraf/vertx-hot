@@ -114,6 +114,9 @@ with the property `devmode` set to `true`.
   
 * `buildResources` - when set to `true`, any change to files under the resource directories will trigger a compile. 
 Use this if your resources generate sources. Default is `false`.
+
+* `notificationPort` - the websocket port for notifications to the browser, when used in conjunction with 
+`liveHttpReload` set to `true`. Default is `9999`. 
  
 ### Sequence
 

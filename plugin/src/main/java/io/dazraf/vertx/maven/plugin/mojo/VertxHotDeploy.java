@@ -29,6 +29,9 @@ public class VertxHotDeploy extends AbstractMojo {
   @Parameter(property = "buildResources", required = false, defaultValue = "false")
   private boolean buildResources = false;
 
+  @Parameter(property = "notificationPort", required = false, defaultValue = "9999")
+  private int notificationPort = 9999;
+
   /**
    * The enclosing project.
    */
@@ -44,7 +47,8 @@ public class VertxHotDeploy extends AbstractMojo {
         .withVerticleClassName(verticleClassName)
         .withConfigFileName(configFile)
         .withLiveHttpReload(liveHttpReload)
-        .withBuildResources(buildResources));
+        .withBuildResources(buildResources)
+        .withNotificationPort(notificationPort));
     } catch (Exception e) {
       log.error(e);
       throw new MojoExecutionException("Failed to startup hot redeploy", e);

@@ -51,7 +51,7 @@ public class HotDeploy {
 
   private HotDeploy(HotDeployParameters parameters) {
     this.parameters = parameters;
-    this.verticleDeployer = new VerticleDeployer(parameters.isLiveHttpReload());
+    this.verticleDeployer = new VerticleDeployer(parameters.isLiveHttpReload(), parameters.getNotificationPort());
     this.statusProducer = verticleDeployer.createEventProducer();
   }
 

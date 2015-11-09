@@ -38,10 +38,10 @@ public class VerticleDeployer implements Closeable {
     System.setProperty("vertx.disableFileCaching", "true");
   }
 
-  public VerticleDeployer(boolean hotHttpServer) {
+  public VerticleDeployer(boolean hotHttpServer, int notificationPort) {
     if (hotHttpServer) {
       this.vertx = new VertxWrapper(new VertxOptions().setBlockedThreadCheckInterval(3_600_000));
-      vertx.deployVerticle(new WebNotificationService());
+      vertx.deployVerticle(new WebNotificationService(notificationPort));
     } else {
       this.vertx = Vertx.vertx();
     }

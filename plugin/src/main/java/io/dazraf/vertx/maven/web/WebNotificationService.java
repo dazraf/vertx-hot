@@ -10,8 +10,12 @@ import org.slf4j.LoggerFactory;
 public class WebNotificationService extends AbstractVerticle {
   public static final String TOPIC = "vertx.hot.status";
   private static final Logger logger = LoggerFactory.getLogger(WebNotificationService.class);
-  private static final int PORT = 9999;
+  private final int notificationPort;
   private HttpServer httpServer;
+
+  public WebNotificationService(int notificationPort) {
+    this.notificationPort = notificationPort;
+  }
 
   @Override
   public void start() throws Exception {
@@ -27,8 +31,8 @@ public class WebNotificationService extends AbstractVerticle {
           websocketHandler.closeHandler((v) -> consumer.unregister());
         }
       )
-      .listen(PORT);
-    logger.info("notification websocket started on: http://localhost:{}", PORT);
+      .listen(notificationPort);
+    logger.info("notification websocket started on: http://localhost:{}", notificationPort);
   }
 
   @Override

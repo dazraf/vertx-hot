@@ -11,6 +11,7 @@ public class HotDeployParameters {
   private Optional<String> configFileName;
   private boolean liveHttpReload;
   private boolean buildResources;
+  private int notificationPort;
 
   public static HotDeployParameters create() {
     return new HotDeployParameters();
@@ -41,6 +42,11 @@ public class HotDeployParameters {
     return this;
   }
 
+  public HotDeployParameters withNotificationPort(int notificationPort) {
+    this.notificationPort = notificationPort;
+    return this;
+  }
+
   public MavenProject getProject() {
     return project;
   }
@@ -59,6 +65,10 @@ public class HotDeployParameters {
 
   public boolean isBuildResources() {
     return buildResources;
+  }
+
+  public int getNotificationPort() {
+    return notificationPort;
   }
 
   @Override
