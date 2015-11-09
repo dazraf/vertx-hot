@@ -1,18 +1,16 @@
-package io.dazraf.vertx.maven;
+package io.dazraf.vertx.maven.web;
 
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.eventbus.MessageConsumer;
 import io.vertx.core.http.HttpServer;
 import io.vertx.core.json.JsonObject;
-import io.vertx.ext.web.Router;
-import io.vertx.ext.web.handler.StaticHandler;
-import io.vertx.ext.web.templ.HandlebarsTemplateEngine;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-class WebContainer extends AbstractVerticle {
+public class WebNotificationService extends AbstractVerticle {
   public static final String TOPIC = "vertx.hot.status";
-  private static final Logger logger = LoggerFactory.getLogger(WebContainer.class);
+  private static final Logger logger = LoggerFactory.getLogger(WebNotificationService.class);
+  private static final int PORT = 9999;
   private HttpServer httpServer;
 
   @Override
@@ -29,8 +27,8 @@ class WebContainer extends AbstractVerticle {
           websocketHandler.closeHandler((v) -> consumer.unregister());
         }
       )
-      .listen(9999);
-    logger.info("proxy service started on: http://localhost:{}", 9999);
+      .listen(PORT);
+    logger.info("notification websocket started on: http://localhost:{}", PORT);
   }
 
   @Override

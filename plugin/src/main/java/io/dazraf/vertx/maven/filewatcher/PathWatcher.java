@@ -1,4 +1,4 @@
-package io.dazraf.vertx.maven;
+package io.dazraf.vertx.maven.filewatcher;
 
 import com.darylteo.nio.DirectoryChangedSubscriber;
 import com.darylteo.nio.DirectoryWatcher;
@@ -9,13 +9,11 @@ import rx.Observable;
 import rx.functions.Action0;
 import rx.subjects.PublishSubject;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.function.Consumer;
-import java.util.function.Function;
 
-class PathWatcher {
+public class PathWatcher {
   private final static Logger logger = LoggerFactory.getLogger(PathWatcher.class);
 
   public static Observable<Path> create(final Path path) throws Exception {
