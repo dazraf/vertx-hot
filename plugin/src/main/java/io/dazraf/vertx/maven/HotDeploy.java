@@ -27,8 +27,6 @@ import static java.util.stream.Stream.empty;
 import static java.util.stream.Stream.of;
 
 public class HotDeploy {
-  private final HotDeployParameters parameters;
-
   public enum DeployStatus {
     COMPILING,
     DEPLOYING,
@@ -38,11 +36,11 @@ public class HotDeploy {
   }
 
   private static final Logger logger = LoggerFactory.getLogger(HotDeploy.class);
+  private final HotDeployParameters parameters;
+  private final Compiler compiler = new Compiler();
   private final VerticleDeployer verticleDeployer;
   private final MessageProducer<JsonObject> statusProducer;
   private final AtomicReference<Closeable> currentDeployment = new AtomicReference<>();
-  private final Compiler compiler = new Compiler();
-  private long startTime;
 
   public static void run(HotDeployParameters parameters) throws Exception {
     logger.info("Running HOTDEPLOY with {}", parameters.toString());
@@ -167,7 +165,7 @@ public class HotDeploy {
   }
 
   private void compileAndDeploy() {
-    markFileDetected();
+    long startTime = markFileDetected();
     logger.info("Compiling...");
     sendStatus(DeployStatus.COMPILING);
 
@@ -178,15 +176,15 @@ public class HotDeploy {
       sendStatus(e);
     }
 
-    markRedeployed();
+    markRedeployed(startTime);
     printLastMessage();
   }
 
-  private void markFileDetected() {
-    this.startTime = System.nanoTime();
+  private long markFileDetected() {
+    return System.nanoTime();
   }
 
-  private void markRedeployed() {
+  private void markRedeployed(long startTime) {
     long nanos = System.nanoTime() - startTime;
     String status = currentDeployment.get() != null ? "Compiled and redeployed" : "Deployment failed";
     logger.info("{} in {}s", status, String.format("%1.3f", nanos * 1E-9));
@@ -194,32 +192,39 @@ public class HotDeploy {
 
   private void loadApp(CompileResult compileResult) {
     // atomic
-    currentDeployment.getAndUpdate(c -> {
+    currentDeployment.getAndUpdate(existingVerticle -> {
       sendStatus(DeployStatus.DEPLOYING);
-      // if we have a deployment, shut it down
-      if (c != null) {
-        try {
-          logger.info("Shutting down existing deployment");
-          c.close();
-          logger.info("Deployment shutdown");
-        } catch (IOException e) {
-          logger.error("Error shutting down existing deployment", e);
-          throw new RuntimeException(e);
-        }
-      }
-
-      // deploy
-      try {
-        logger.info("Starting deployment");
-        Closeable closeable = verticleDeployer.deploy(parameters.getVerticleClassName(), compileResult.getClassPath(), parameters.getConfigFileName());
-        sendStatus(DeployStatus.DEPLOYED);
-        return closeable;
-      } catch (Throwable e) {
-        sendStatus(e);
-        logger.error("Error in deployment", e);
-        return null;
-      }
+      closeExistingVerticle(existingVerticle);
+      return deployNewVerticle(compileResult);
     });
+  }
+
+  private Closeable deployNewVerticle(CompileResult compileResult) {
+    // deploy
+    try {
+      logger.info("Starting deployment");
+      Closeable closeable = verticleDeployer.deploy(parameters.getVerticleClassName(), compileResult.getClassPath(), parameters.getConfigFileName());
+      sendStatus(DeployStatus.DEPLOYED);
+      return closeable;
+    } catch (Throwable e) {
+      sendStatus(e);
+      logger.error("Error in deployment", e);
+      return null;
+    }
+  }
+
+  private void closeExistingVerticle(Closeable existingVerticle) {
+    // if we have a deployment, shut it down
+    if (existingVerticle != null) {
+      try {
+        logger.info("Shutting down existing deployment");
+        existingVerticle.close();
+        logger.info("Deployment shutdown");
+      } catch (IOException e) {
+        logger.error("Error shutting down existing deployment", e);
+        throw new RuntimeException(e);
+      }
+    }
   }
 
   private void sendStatus(DeployStatus deployStatus) {
