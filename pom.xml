@@ -10,7 +10,9 @@
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
   </properties>
-  
+
+  <description>Parent project for vertx-hot-maven-plugin. A Maven plugin for hot re-deploy of Maven Vert.x applications</description>
+
   <scm>
     <url>https://github.com/dazraf/vertx-hot</url>
     <connection>scm:git:git://github.com/dazraf/vertx-hot.git</connection>
