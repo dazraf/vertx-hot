@@ -33,7 +33,10 @@ Contributions most gratefully received and recognised.
 ## Instructions
 
 ### Step 1: Download
-Whilst the plugin is awaiting upload to Maven Central, clone this project locally and run `mvn install`.
+
+Release versions of the plugin are available in [Maven Central](http://search.maven.org/#search%7Cga%7C1%7Ca%3A%22vertx-hot-maven-plugin%22).
+Snapshots are available in [Sonatype](https://oss.sonatype.org/content/groups/public/io/dazraf/vertx-hot-maven-plugin).
+Zip'd releases are available in [here](https://github.com/dazraf/vertx-hot/releases).
 
 ### Step 2: Add to your project
 Add the following to your project `pom.xml`:
@@ -42,7 +45,7 @@ Add the following to your project `pom.xml`:
 <plugin>
     <groupId>io.dazraf</groupId>
     <artifactId>vertx-hot-maven-plugin</artifactId>
-    <version>1.0.0-SNAPSHOT</version>
+    <version>1.0.2</version>
     <configuration>
         <verticleClassName>io.dazraf.service.App</verticleClassName>
         <configFile>config.json</configFile>
