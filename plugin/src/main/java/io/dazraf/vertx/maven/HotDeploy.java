@@ -159,9 +159,17 @@ public class HotDeploy {
   }
 
   private void onRefreshableFileEvent(List<Path> paths) {
-    if (paths.size() > 0) {
-      sendStatus(DeployStatus.DEPLOYED);
+    if (paths != null && paths.size() > 0) {
+      if (pathsContainConfig(paths)) {
+        compileAndDeploy();
+      } else {
+        sendStatus(DeployStatus.DEPLOYED);
+      }
     }
+  }
+
+  private boolean pathsContainConfig(List<Path> paths) {
+    return paths.stream().anyMatch(f -> parameters.getConfigFileName().map(f::endsWith).orElse(false));
   }
 
   private void compileAndDeploy() {
