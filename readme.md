@@ -36,7 +36,7 @@ Contributions most gratefully received and recognised.
 
 Release versions of the plugin are available in [Maven Central](http://search.maven.org/#search%7Cga%7C1%7Ca%3A%22vertx-hot-maven-plugin%22).
 Snapshots are available in [Sonatype](https://oss.sonatype.org/content/groups/public/io/dazraf/vertx-hot-maven-plugin).
-Zip'd releases are available in [here](https://github.com/dazraf/vertx-hot/releases).
+Zip'd releases are available [here](https://github.com/dazraf/vertx-hot/releases).
 
 ### Step 2: Add to your project
 Add the following to your project `pom.xml`:
