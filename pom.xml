@@ -11,7 +11,16 @@
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
   </properties>
 
+  <name>vert.x-hot maven plugin parent</name>
   <description>Parent project for vertx-hot-maven-plugin. A Maven plugin for hot re-deploy of Maven Vert.x applications</description>
+
+  <licenses>
+    <license>
+      <name>MIT License</name>
+      <url>http://www.opensource.org/licenses/mit-license.php</url>
+      <distribution>repo</distribution>
+    </license>
+  </licenses>
 
   <scm>
     <url>https://github.com/dazraf/vertx-hot</url>
