@@ -1,23 +1,16 @@
-import com.mongodb.rx.client.MongoClient;
-import com.mongodb.rx.client.MongoClients;
-import com.mongodb.rx.client.MongoCollection;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.eventbus.MessageConsumer;
 import io.vertx.core.http.HttpServer;
 import io.vertx.core.http.HttpServerResponse;
+import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
+import io.vertx.ext.mongo.MongoClient;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.handler.BodyHandler;
 import io.vertx.ext.web.handler.StaticHandler;
 import org.bson.Document;
-import org.bson.conversions.Bson;
-import org.bson.types.ObjectId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.util.concurrent.atomic.AtomicBoolean;
-
-import static com.mongodb.client.model.Filters.eq;
 
 public class App extends AbstractVerticle {
   private static final Logger logger = LoggerFactory.getLogger(App.class);
@@ -25,8 +18,8 @@ public class App extends AbstractVerticle {
   private static final java.lang.String TASK_COLLECTION = "Tasks";
   private static final String WEB_SOCKET_PORT = "/api/notifications";
   private static final String NOTIFICATION_TOPIC = "task.notification";
-  private MongoClient mongoClient;
   private HttpServer httpServer;
+  private MongoClient db;
 
   private enum Operation {
     Create,
@@ -42,7 +35,7 @@ public class App extends AbstractVerticle {
   }
 
   private void setupDatabaseClient() {
-    this.mongoClient = MongoClients.create();
+    this.db = MongoClient.createNonShared(vertx, config().getJsonObject("db"));
   }
 
   private void setWebServer() {
@@ -84,53 +77,66 @@ public class App extends AbstractVerticle {
   private void bindGetTasks(Router router) {
     router.get("/api/task").handler(rc -> {
       HttpServerResponse response = rc.response();
-      response.setChunked(true);
-      response.putHeader("content-type", rc.getAcceptableContentType());
-      response.write("[");
-      AtomicBoolean first = new AtomicBoolean(true);
-      MongoCollection<Document> collection = getDBCollection();
-      collection.find().toObservable().subscribe(task -> {
-          if (first.get()) {
-            first.set(false);
-          } else {
-            response.write(",");
-          }
-          response.write(fixId(task).toJson());
-        },
-        err -> response.setStatusCode(500).setStatusMessage(err.getMessage()).end(),
-        () -> response.end("]")
-      );
-    })
-      .produces("application/json");
+      db.find(TASK_COLLECTION, new JsonObject(), ar -> {
+        if (ar.failed()) {
+          reportError(response, ar.cause());
+        } else {
+          response.putHeader("content-type", rc.getAcceptableContentType());
+          JsonArray result = new JsonArray(ar.result());
+          response.end(result.toString());
+        }
+      });
+    }).produces("application/json");
+  }
+
+  private void reportError(HttpServerResponse response, Throwable cause) {
+    response.setStatusCode(500).setStatusMessage(cause.getMessage()).end();
   }
 
   private void bindGetTask(Router router) {
     router.get("/api/task/:id").handler(rc -> {
       String id = rc.request().getParam("id");
       HttpServerResponse response = rc.response();
-      response.putHeader("content-type", rc.getAcceptableContentType());
 
-      getDBCollection().find(eq("_id", new ObjectId(id))).toObservable().subscribe(
-        found -> response.end(fixId(found).toJson()),
-        err -> response.setStatusCode(500).setStatusMessage(err.getMessage()).end(),
-        () -> logger.info("get done")
-      );
-
+      JsonObject query = new JsonObject().put("_id", id);
+      db.find(TASK_COLLECTION, query, ar -> {
+        if(ar.failed()) {
+          reportError(response, ar.cause());
+        } else if (ar.result().size() == 0) {
+          response.setStatusCode(500).setStatusMessage("could not find id: " + id);
+        } else {
+          response.putHeader("content-type", rc.getAcceptableContentType());
+          response.end(ar.result().get(0).toString());
+        }
+      });
     }).produces("application/json");
   }
 
   private void bindCreateTask(Router router) {
     router.post("/api/task").handler(rc -> {
       HttpServerResponse response = rc.response();
-      response.putHeader("content-type", rc.getAcceptableContentType());
-      String body = rc.getBodyAsString();
-      Document task = Document.parse(body);
-      getDBCollection().insertOne(task).subscribe(
-        success -> {
-          String jsonString = fixId(task).toJson();
-          sendResultAndNotification(response, jsonString, Operation.Create);
-        },
-        err -> response.setStatusCode(500).setStatusMessage(err.getMessage()).end());
+      JsonObject task = rc.getBodyAsJson();
+
+      db.insert(TASK_COLLECTION, task, arInsert -> {
+        if (arInsert.failed()) {
+          reportError(response, arInsert.cause());
+        } else {
+          JsonObject query = new JsonObject().put("_id", arInsert.result());
+          JsonObject fields = new JsonObject()
+					  .put("_id", true)
+            .put("description", true)
+						.put("done", true);
+
+          db.findOne(TASK_COLLECTION, query, fields, arFind -> {
+            if (arFind.failed()) {
+              reportError(response, arFind.cause());
+            } else {
+              response.putHeader("content-type", rc.getAcceptableContentType());
+              sendResultAndNotification(response, arFind.result(), Operation.Create);
+            }
+          });
+        }
+      });
     }).consumes("application/json")
       .produces("application/json");
   }
@@ -139,18 +145,17 @@ public class App extends AbstractVerticle {
     router.put("/api/task/:id").handler(rc -> {
       String id = rc.request().getParam("id");
       HttpServerResponse response = rc.response();
-      response.putHeader("content-type", rc.getAcceptableContentType());
-      String body = rc.getBodyAsString();
-
-      Document task = Document.parse(body);
-      Bson equalId = eq("_id", new ObjectId(id));
-      getDBCollection().updateOne(equalId, new Document("$set", removeId(task))).subscribe(
-        success -> getDBCollection().find(equalId).toObservable().subscribe(found -> {
-          sendResultAndNotification(response, fixId(found).toJson(), Operation.Update);
-        }),
-        err -> response.setStatusCode(500).setStatusMessage(err.getMessage()).end(),
-        () -> logger.info("done update")
-      );
+      JsonObject task = rc.getBodyAsJson();
+      JsonObject query = new JsonObject().put("_id", id);
+      JsonObject operation = new JsonObject().put("$set", task);
+      db.update(TASK_COLLECTION, query, operation, result -> {
+        if (result.failed()) {
+          reportError(response, result.cause());
+        } else {
+          response.putHeader("content-type", rc.getAcceptableContentType());
+          sendResultAndNotification(response, task, Operation.Update);
+        }
+      });
     })
       .consumes("application/json")
       .produces("application/json");
@@ -162,32 +167,24 @@ public class App extends AbstractVerticle {
       HttpServerResponse response = rc.response();
       response.putHeader("content-type", rc.getAcceptableContentType());
 
-      ObjectId idObject = new ObjectId(id);
-      Document idDocument = new Document("_id", idObject);
-      getDBCollection().deleteOne(idDocument).subscribe(deleteResult -> {
-        JsonObject result = new JsonObject();
-        result
-          .put("status", deleteResult.getDeletedCount() == 1 ? "done" : "failed")
-          .put("id", id);
-        sendResultAndNotification(response, result.toString(), Operation.Delete);
-        response.end(result.toString());
+      JsonObject query = new JsonObject().put("_id", id);
+      db.removeOne(TASK_COLLECTION, query, ar -> {
+        if (ar.failed()) {
+          reportError(response, ar.cause());
+        } else {
+          JsonObject result = new JsonObject()
+            .put("status", "done")
+            .put("id", id);
+          sendResultAndNotification(response, result, Operation.Delete);
+        }
       });
     })
       .produces("application/json");
   }
 
-  private Document removeId(Document task) {
-    task.remove("_id");
-    return task;
-  }
-
   private Document fixId(Document document) {
     document.put("_id", document.getObjectId("_id").toString());
     return document;
-  }
-
-  private MongoCollection<Document> getDBCollection() {
-    return mongoClient.getDatabase(TASK_DB).getCollection(TASK_COLLECTION);
   }
 
   private void bindStaticFiles(Router router) {
@@ -212,9 +209,9 @@ public class App extends AbstractVerticle {
   }
 
   private void closeDatabaseClient() {
-    if (mongoClient != null) {
-      mongoClient.close();
-      mongoClient = null;
+    if (db != null) {
+      db.close();
+      db = null;
     }
   }
 
@@ -225,11 +222,11 @@ public class App extends AbstractVerticle {
     }
   }
 
-  private void sendResultAndNotification(HttpServerResponse response, String jsonString, Operation operation) {
+  private void sendResultAndNotification(HttpServerResponse response, JsonObject result, Operation operation) {
     JsonObject notification = new JsonObject();
     notification.put("op", operation);
-    notification.put("value", new JsonObject(jsonString));
+    notification.put("value", result);
     vertx.eventBus().publish(NOTIFICATION_TOPIC, notification);
-    response.end(jsonString);
+    response.end(result.toString());
   }
 }

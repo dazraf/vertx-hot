@@ -8,23 +8,47 @@
     src: url(/fonts/Roboto/Roboto-Regular.ttf);
 }
 
-html 					{ overflow-y:scroll; }
-body 					{ padding-top:50px; }
+html { overflow-y:scroll; }
+
+body {
+  padding-top:50px;
+  background-color: white;
+}
+
 h1 {
   font-family: lobster;
 }
+
 h2 {
   font-family: lobster;
 }
+
 h3 {
   font-family: lobster;
   font-weight: lighter;
 }
+
+.tdicon {
+  width: 32px !important;
+}
+
+.jumbotron {
+  background-color: green;
+  color: white;
+  background-color: rgb(0, 153, 204)
+}
+
+.task-done-true {
+  text-decoration: line-through;
+  color: grey;
+}
+
 #task-list 				{
   margin-bottom:30px;
   font-family: roboto;
   font-size: large;
 }
+
 #task-form 	{
   margin-bottom:50px;
   font-family: roboto;

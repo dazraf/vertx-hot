@@ -22,50 +22,65 @@
 </head>
 <!-- SET THE CONTROLLER -->
 <body ng-controller="mainController">
-<div class="container">
+  <div class="container">
 
-  <!-- HEADER AND TASK COUNT -->
-  <div class="jumbotron text-center">
-    <h1>Tasks remaining <span class="label label-info">{{ getTotalTasks() }}</span></h1>
-  </div>
+    <!-- HEADER AND TASK COUNT -->
+    <div class="jumbotron text-center">
+      <h1>Tasks remaining: <span class="label label-info">{{ getTotalTasks() }}</span></h1>
+    </div>
 
-  <!-- TASK LIST -->
-  <div id="task-list" class="row">
-    <div class="col-sm-4 col-sm-offset-4">
+    <!-- TASK LIST -->
+    <div id="task-list" class="row">
+        <table class="table">
+          <thead>
+            <tr>
+              <th class="col-md-1">&nbsp;</th>
+              <th class="col-md-1">&nbsp;</th>
+              <th class="col-md-9"></th>
+            </thead>
+            <tbody>
+              <!-- LOOP OVER THE Tasks IN $scope.tasks -->
+              <tr ng-repeat="(id, item) in items" ng-mouseover="hover(item)" ng-mouseout="hover(item)">
+                <td style="width: 50px">
+                  <span class="glyphicon glyphicon-remove" aria-hidden="true" ng-show="item.showControls" ng-click="deleteTask(item)"></span>
+                </td>
+                <td style="width: 50px">
+                  <span class="glyphicon glyphicon-ok" aria-hidden="true" ng-show="item.showControls" ng-click="toggleTask(item)"></span>
+                </td>
+                <td>
+                  <span class="task-done-{{item.data.done}}">
+                    {{ item.data.description }}
+                  </span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+      </div>
 
-      <!-- LOOP OVER THE Tasks IN $scope.tasks -->
-      <div class="checkbox" ng-repeat="(id, task) in tasks">
-        <label>
-          <input type="checkbox" ng-click="deleteTask(task._id)"> {{ task.description }}
-        </label>
+      <!-- FORM TO CREATE TASKS -->
+      <div id="task-form" class="row">
+        <div class="col-sm-8 col-sm-offset-2 text-center">
+          <form>
+            <div class="input-group">
+
+              <!-- BIND THIS VALUE TO formData.text IN ANGULAR -->
+              <input type="text" size=30 class="form-control input-lg text-center"
+              placeholder="I want to buy a robot that will love me forever" ng-model="formData.text">
+              <span class="input-group-btn">
+                <!-- createTask() WILL CREATE NEW Tasks -->
+                <button type="submit" class="btn btn-primary btn-lg" ng-click="createTask()">Add</button>
+              </span>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <div class="text-center text-muted">
+        <p>A demo cloned and adapted from <a href="http://scotch.io">Scotch</a>.</p>
+        <p>Read the original <a href="http://scotch.io/tutorials/javascript/creating-a-single-page-todo-app-with-node-and-angular">tutorial</a>.</p>
       </div>
 
     </div>
-  </div>
 
-  <!-- FORM TO CREATE TASKS -->
-  <div id="task-form" class="row">
-    <div class="col-sm-8 col-sm-offset-2 text-center">
-      <form>
-        <div class="input-group">
-
-          <!-- BIND THIS VALUE TO formData.text IN ANGULAR -->
-          <input type="text" size=30 class="form-control input-lg text-center" placeholder="I want to buy a puppy that will love me forever" ng-model="formData.text">
-          <span class="input-group-btn">
-            <!-- createTask() WILL CREATE NEW Tasks -->
-            <button type="submit" class="btn btn-primary btn-lg" ng-click="createTask()">Add</button>
-          </span>
-        </div>
-      </form>
-    </div>
-  </div>
-
-  <div class="text-center text-muted">
-    <p>A demo directly cloned from <a href="http://scotch.io">Scotch</a>.</p>
-    <p>Read the original <a href="http://scotch.io/tutorials/javascript/creating-a-single-page-todo-app-with-node-and-angular">tutorial</a>.</p>
-  </div>
-
-</div>
-
-</body>
-</html>
+  </body>
+  </html>

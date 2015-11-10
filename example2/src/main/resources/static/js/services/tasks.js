@@ -10,6 +10,9 @@ angular.module('taskService', [])
       delete : function(id) {
         return $http.delete("/api/task/" + id);
       },
+      update: function(task) {
+        return $http.put("/api/task/" + task._id, task)
+      },
       done: function(id, done) {
         return $http.put("/api/task/" + id, { done: done });
       }
