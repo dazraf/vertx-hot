@@ -41,10 +41,10 @@
             <tbody>
               <!-- LOOP OVER THE Tasks IN $scope.tasks -->
               <tr ng-repeat="(id, item) in items" ng-mouseover="hover(item)" ng-mouseout="hover(item)">
-                <td style="width: 30px">
+                <td style="width: 50px">
                   <span class="glyphicon glyphicon-remove" aria-hidden="true" ng-show="item.showControls" ng-click="deleteTask(item)"></span>
                 </td>
-                <td style="width: 30px">
+                <td style="width: 50px">
                   <span class="glyphicon glyphicon-ok" aria-hidden="true" ng-show="item.showControls" ng-click="toggleTask(item)"></span>
                 </td>
                 <td>
