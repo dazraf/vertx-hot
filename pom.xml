@@ -161,6 +161,12 @@
             <version>1.4</version>
             <executions>
               <execution>
+                <configuration>
+                  <excludes>
+                    <exclude>*.png</exclude>
+                    <exclude>*.gif</exclude>
+                  </excludes>
+                </configuration>
                 <id>sign-artifacts</id>
                 <phase>verify</phase>
                 <goals>
