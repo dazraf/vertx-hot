@@ -29,9 +29,9 @@ public class Compiler {
   /**
    * Compile the maven project, returning the list of classpath paths as reported by maven
    *
-   * @param project
-   * @return
-   * @throws Exception
+   * @param project This is the top level maven project that was provided by the maven run time when the plugin was invoked
+   * @return the result of compilation containing the classpaths etc
+   * @throws Exception if there was any error
    */
   public CompileResult compile(MavenProject project) throws Exception {
 

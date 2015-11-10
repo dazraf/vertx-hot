@@ -13,37 +13,8 @@
 
   <name>vert.x-hot maven plugin</name>
   <description>A Maven plugin for hot re-deploy of Maven Vert.x applications</description>
+
   <packaging>maven-plugin</packaging>
-  <properties>
-    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-  </properties>
-
-  <scm>
-    <url>https://github.com/dazraf/vertx-hot</url>
-    <connection>scm:git:git://github.com/dazraf/vertx-hot.git</connection>
-    <developerConnection>scm:git:git@github.com:dazraf/vertx-hot.git</developerConnection>
-  </scm>
-
-  <issueManagement>
-    <url>https://github.com/dazraf/vertx-hot/issues</url>
-    <system>GitHub Issues</system>
-  </issueManagement>
-
-  <developers>
-    <developer>
-      <email>farzad.pezeshkpour@gmail.com</email>
-      <name>Farzad Pezeshkpour</name>
-      <url>https://github.com/dazraf</url>
-      <id>dazraf</id>
-    </developer>
-  </developers>
-  <licenses>
-    <license>
-      <name>MIT Licence</name>
-      <url>http://opensource.org/licenses/MIT</url>
-      <distribution>repo</distribution>
-    </license>
-  </licenses>
 
   <dependencies>
     <dependency>
@@ -128,15 +99,6 @@
 
   <build>
     <plugins>
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-compiler-plugin</artifactId>
-        <version>3.2</version>
-        <configuration>
-          <source>1.8</source>
-          <target>1.8</target>
-        </configuration>
-      </plugin>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-plugin-plugin</artifactId>

@@ -8,9 +8,201 @@
   <artifactId>vertx-hot-parent</artifactId>
   <packaging>pom</packaging>
   <version>1.0.0-SNAPSHOT</version>
-  <modules>
-    <module>plugin</module>
-    <module>example1</module>
-    <module>example2</module>
-  </modules>
+
+  <properties>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+  </properties>
+  
+  <scm>
+    <url>https://github.com/dazraf/vertx-hot</url>
+    <connection>scm:git:git://github.com/dazraf/vertx-hot.git</connection>
+    <developerConnection>scm:git:git@github.com:dazraf/vertx-hot.git</developerConnection>
+  </scm>
+
+  <url>https://github.com/dazraf/vertx-hot</url>
+
+  <issueManagement>
+    <url>https://github.com/dazraf/vertx-hot/issues</url>
+    <system>GitHub Issues</system>
+  </issueManagement>
+
+  <developers>
+    <developer>
+      <id>dazraf</id>
+      <url>https://github.com/dazraf</url>
+    </developer>
+    <developer>
+      <id>illuminace</id>
+      <url>https://github.com/illuminace</url>
+    </developer>
+  </developers>
+
+  <build>
+    <pluginManagement>
+      <plugins>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-compiler-plugin</artifactId>
+          <version>3.2</version>
+          <configuration>
+            <source>1.8</source>
+            <target>1.8</target>
+          </configuration>
+        </plugin>
+      </plugins>
+    </pluginManagement>
+
+
+    <plugins>
+      <!--&lt;!&ndash; Produce ZIP with dependencies and samples. &ndash;&gt;-->
+      <!--<plugin>-->
+        <!--<artifactId>maven-assembly-plugin</artifactId>-->
+        <!--<version>2.4.1</version>-->
+        <!--<executions>-->
+          <!--<execution>-->
+            <!--<id>assemble-zip</id>-->
+            <!--<phase>package</phase>-->
+            <!--<goals>-->
+              <!--<goal>single</goal>-->
+            <!--</goals>-->
+          <!--</execution>-->
+        <!--</executions>-->
+        <!--<configuration>-->
+          <!--<descriptors>-->
+            <!--<descriptor>maven-assembly-dist.xml</descriptor>-->
+          <!--</descriptors>-->
+        <!--</configuration>-->
+      <!--</plugin>-->
+
+      <plugin>
+        <!--
+        Releasing:
+            mvn release:prepare
+            mvn release:perform
+         -->
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-release-plugin</artifactId>
+        <version>2.4.1</version>
+        <configuration>
+          <autoVersionSubmodules>true</autoVersionSubmodules>
+          <releaseProfiles>release-sign-artifacts</releaseProfiles>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
+
+  <distributionManagement>
+    <!-- My project's Sonatype repository to be used by the release plugin -->
+    <repository>
+      <id>nexus-releases</id>
+      <name>Nexus Release Repository</name>
+      <url>https://oss.sonatype.org/service/local/staging/deploy/maven2</url>
+    </repository>
+    <snapshotRepository>
+      <id>nexus-snapshots</id>
+      <name>My Nexus Snapshots Repository</name>
+      <url>https://oss.sonatype.org/content/repositories/snapshots</url>
+    </snapshotRepository>
+  </distributionManagement>
+
+  <profiles>
+    <profile>
+      <id>all</id>
+      <activation>
+        <activeByDefault>true</activeByDefault>
+      </activation>
+
+      <modules>
+        <module>plugin</module>
+        <module>example1</module>
+        <module>example2</module>
+      </modules>
+    </profile>
+
+    <profile>
+      <id>release-sign-artifacts</id>
+      <modules>
+        <module>plugin</module>
+      </modules>
+      <activation>
+        <property>
+          <!--
+            will be set by the release plugin upon performing mvn
+            release:perform
+          -->
+          <name>performRelease</name>
+          <value>true</value>
+        </property>
+      </activation>
+      <properties>
+        <gpg.keyname>BF1D321C</gpg.keyname> <!-- GPG Key ID to use for signing -->
+        <release.username>dazraf</release.username> <!-- username for our git repository -->
+      </properties>
+      <build>
+        <plugins>
+          <!--
+            Enable signing of the artifacts For gpg:sign-and-deploy-file it's
+            necessary to have a <server> with the repositoryId provided or
+            id="remote-repository" defined in settings.xml (it contains the
+            repository's login, psw) Signing: mvn gpg:sign-and-deploy-file
+            -DpomFile=target/myapp-1.0.pom -Dfile=target/myapp-1.0.jar
+            -Durl=http://oss.sonatype.org/content/repositories/malyvelky/
+            -DrepositoryId=sonatype_oss Note normally it uses the defaul key
+            but we can ovveride it by either setting the property gpg.keyname
+            (done in this POM) or by providing -Dkeyname=66AE163A on the
+            command line. OR directly w/ gpg (remove space in - -): gpg -u 66AE163A - -sign -
+            -detach-sign -a target/dbunit-express.jar Note:
+            "mvn gpg:sign" results in NPE with v 1.o-a.-4, use "mvn package
+            gpg:sign" instead; see the issue MGPG-18
+          -->
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-gpg-plugin</artifactId>
+            <version>1.4</version>
+            <executions>
+              <execution>
+                <id>sign-artifacts</id>
+                <phase>verify</phase>
+                <goals>
+                  <goal>sign</goal>
+                </goals>
+              </execution>
+            </executions>
+          </plugin>
+
+          <!-- Publish also javadocs when releasing - required by Sonatype -->
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-javadoc-plugin</artifactId>
+            <version>2.10.3</version>
+            <executions>
+              <execution>
+                <id>attach-javadocs</id>
+                <goals>
+                  <goal>jar</goal>
+                </goals>
+              </execution>
+            </executions>
+          </plugin>
+
+        </plugins>
+      </build>
+    </profile>
+
+    <profile>
+      <id>include-sources</id>
+      <build>
+        <resources>
+          <resource>
+            <targetPath>/</targetPath>
+            <filtering>true</filtering>
+            <directory>src/main/java</directory>
+            <includes>
+              <include>**/*.java</include>
+            </includes>
+          </resource>
+        </resources>
+      </build>
+    </profile>
+  </profiles>
 </project>

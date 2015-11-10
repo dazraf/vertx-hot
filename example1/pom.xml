@@ -9,7 +9,7 @@
     <version>1.0.0-SNAPSHOT</version>
   </parent>
 
-  <artifactId>vertx-hot-example</artifactId>
+  <artifactId>example1</artifactId>
 
   <name>example1</name>
   <description>A simple test vert.x verticle to demonstrate the vertx-hot plugin</description>
