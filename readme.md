@@ -7,12 +7,11 @@
 ## Contents
 
 1. [Background](#background)
-2. [Demo](#demo)
-3. [Aims](#aims)
-4. [Instructions](#instructions)
-5. [Example Project](#example-project)
-6. [Design Notes](#design-notes)
-7. [Contributors](#contributors)
+2. [Aims](#aims)
+3. [Instructions](#instructions)
+4. [Example Project](#example-project)
+5. [Design Notes](#design-notes)
+6. [Contributors](#contributors)
 
 ## Background
 
@@ -21,9 +20,6 @@ I love coding with [Vert.x](http://vertx.io). Truly an incredible toolkit for de
 This plugin was originally written for personal use and is shared here in the hope you find it useful also.
 
 Contributions most gratefully received and recognised.
-
-## Demo
-![demo](animation.gif)
 
 ## Aims
 
