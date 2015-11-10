@@ -5,7 +5,7 @@
   <groupId>io.dazraf</groupId>
   <artifactId>vertx-hot-parent</artifactId>
   <packaging>pom</packaging>
-  <version>1.0.0</version>
+  <version>1.0.1-SNAPSHOT</version>
 
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -15,7 +15,7 @@
     <url>https://github.com/dazraf/vertx-hot</url>
     <connection>scm:git:git://github.com/dazraf/vertx-hot.git</connection>
     <developerConnection>scm:git:git@github.com:dazraf/vertx-hot.git</developerConnection>
-    <tag>vertx-hot-parent-1.0.0</tag>
+    <tag>HEAD</tag>
   </scm>
 
   <url>https://github.com/dazraf/vertx-hot</url>
