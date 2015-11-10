@@ -86,6 +86,7 @@
         <configuration>
           <autoVersionSubmodules>true</autoVersionSubmodules>
           <releaseProfiles>release-sign-artifacts</releaseProfiles>
+          <arguments>-Dgpg.passphrase=${gpg.passphrase}</arguments>
         </configuration>
       </plugin>
     </plugins>
@@ -158,15 +159,16 @@
           <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-gpg-plugin</artifactId>
-            <version>1.4</version>
+            <version>1.6</version>
+            <configuration>
+              <excludes>
+                <exclude>*.png</exclude>
+                <exclude>*.gif</exclude>
+                <passphrase>${gpg.passphrase}</passphrase>
+              </excludes>
+            </configuration>
             <executions>
               <execution>
-                <configuration>
-                  <excludes>
-                    <exclude>*.png</exclude>
-                    <exclude>*.gif</exclude>
-                  </excludes>
-                </configuration>
                 <id>sign-artifacts</id>
                 <phase>verify</phase>
                 <goals>
