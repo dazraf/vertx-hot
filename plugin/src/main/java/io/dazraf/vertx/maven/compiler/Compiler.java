@@ -33,7 +33,7 @@ public class Compiler {
    * @return the result of compilation containing the classpaths etc
    * @throws Exception if there was any error
    */
-  public CompileResult compile(MavenProject project) throws Exception {
+  public CompileResult compile(MavenProject project) throws CompilerException, MavenInvocationException {
 
     List<String> classPath = new ArrayList<>();
     // precendence to load from the resources folders rather than the build
@@ -46,14 +46,13 @@ public class Compiler {
     return execute(request, messages, classPath);
   }
 
-  private CompileResult execute(InvocationRequest request, Set<String> messages, List<String> classPath) throws Exception {
+  private CompileResult execute(InvocationRequest request, Set<String> messages, List<String> classPath) throws CompilerException, MavenInvocationException  {
     try {
       InvocationResult result = new DefaultInvoker().execute(request);
 
       if (result.getExitCode() != 0) {
-        String allMessages = messages.stream().collect(Collectors.joining("\n\n"));
         logger.error("Error with exit code {}", result.getExitCode());
-        throw new Exception("Compiler failed with exit code: " + result.getExitCode() + "\n" + allMessages);
+        throw new CompilerException(result.getExitCode(), messages);
       }
       return new CompileResult(classPath);
     } catch (MavenInvocationException e) {
@@ -86,16 +85,4 @@ public class Compiler {
       messages.add(msg);
     }
   }
-
-//  private MavenProject createProject(File pomFile) {
-//    MavenProject project;
-//    // project.getProjectBuildingRequest().
-//
-//    ModelBuildingRequest req = new DefaultModelBuildingRequest();
-//    req.setProcessPlugins(false);
-//    req.setPomFile(pomFile);
-//    ModelResolver resolver = new ;
-//    req.setModelResolver(resolver);
-//    new DefaultModelBuilderFactory().newInstance().build(req).getEffectiveModel();
-//  }
 }
