@@ -2,12 +2,14 @@ package io.dazraf.vertx.maven;
 
 import io.dazraf.vertx.maven.compiler.CompileResult;
 import io.dazraf.vertx.maven.compiler.Compiler;
+import io.dazraf.vertx.maven.compiler.CompilerException;
 import io.dazraf.vertx.maven.deployer.VerticleDeployer;
 import io.dazraf.vertx.maven.filewatcher.PathWatcher;
 import io.vertx.core.eventbus.MessageProducer;
 import io.vertx.core.json.JsonObject;
 import org.apache.maven.model.Resource;
 import org.apache.maven.project.MavenProject;
+import org.apache.maven.shared.invoker.MavenInvocationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import rx.Observable;
@@ -178,13 +180,16 @@ public class HotDeploy {
     sendStatus(DeployStatus.COMPILING);
 
     try {
-      loadApp(compiler.compile(project()));
-    } catch (Exception e) {
+      CompileResult compileResult = compiler.compile(project());
+      logger.info("Done");
+      loadApp(compileResult);
+      markRedeployed(startTime);
+    } catch(CompilerException e) {
+      sendStatus(e);
+    } catch(Exception e) {
       logger.error("error", e);
       sendStatus(e);
     }
-
-    markRedeployed(startTime);
     printLastMessage();
   }
 
