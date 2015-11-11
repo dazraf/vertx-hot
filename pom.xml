@@ -132,7 +132,9 @@
     <profile>
       <id>all</id>
       <activation>
-        <activeByDefault>true</activeByDefault>
+        <property>
+          <name>!performRelease</name>
+        </property>
       </activation>
 
       <modules>
