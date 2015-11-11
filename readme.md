@@ -108,7 +108,7 @@ by [Scotch](http://scotch.io), with a vert.x reactive flavour.
 
 To run either: 
 
-1. You will need [bower](http://bower.io) available on your path.
+1. You will need [bower](http://bower.io) on your path.
 2. After running `mvn clean install` in the parent directory
 3. `cd example1` or `cd example2`
 4. `mvn vertx:hot`
