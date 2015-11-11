@@ -1,5 +1,5 @@
 # vertx:hot
-### A Maven plugin for hot reload of Maven Vert.x projects
+### A Maven plugin for hot reload of Vert.x Verticles
 ---
 
 [![Build Status](https://travis-ci.org/dazraf/vertx-hot.svg?branch=master)](https://travis-ci.org/dazraf/vertx-hot)
@@ -15,9 +15,13 @@
 
 ## Background
 
-I love coding with [Vert.x](http://vertx.io). Truly an incredible toolkit for developing high-performance applications. Being an old-school Maven head, I wanted to make the development of Maven Vert.x Verticles easier. Specifically to rapidly develop and see ones changes automatically reloaded into a fully debuggable JVM. 
+[Vert.x](http://vertx.io) is an incredible toolkit for developing high-performance applications.
 
-This plugin was originally written for personal use and is shared here in the hope you find it useful also.
+If you use Maven as well, then this plugin can speed up your dev cycle.
+
+Write your code and see the changes auto reload into your JVM. Fully debuggable.
+
+This plugin was originally written for personal use. Its shared here under the [MIT](https://opensource.org/licenses/MIT) licence.
 
 Contributions most gratefully received and recognised.
 
@@ -38,17 +42,19 @@ Release versions of the plugin are available in [Maven Central](http://search.ma
 Snapshots are available in [Sonatype](https://oss.sonatype.org/content/groups/public/io/dazraf/vertx-hot-maven-plugin).
 Zip'd releases are available [here](https://github.com/dazraf/vertx-hot/releases).
 
+Please note: the latest version of the plugin depends on `vert.x 3.1.0`.
+
 ### Step 2: Add to your project
 Add the following to your project `pom.xml`:
 
-```xml
+```
 <plugin>
     <groupId>io.dazraf</groupId>
     <artifactId>vertx-hot-maven-plugin</artifactId>
     <version>1.0.2</version>
     <configuration>
-        <verticleClassName>io.dazraf.service.App</verticleClassName>
-        <configFile>config.json</configFile>
+        <verticleClassName>**YourVerticle**</verticleClassName>
+        <configFile>**YourVerticleConfigFile**</configFile>
     </configuration>
 </plugin>
 ```
@@ -61,17 +67,15 @@ The `configuration` has the following elements:
 
 **Optional**
  
-* `configFile` - the class path to the verticle configuration file. The configuration that is loaded will be decorated 
-with the property `devmode` set to `true`.
+* `configFile` - the class path to the verticle configuration file. When loaded, `vertx:hot` will add the property `"devmode": true`.
 
-* `liveHttpReload` - when set to `true`, any web pages served by the application verticles will reload automatically 
-  when the application is recompiled or when any static resources are updated. Default is `true`.
+* `liveHttpReload` - when `true`, all web pages served by the application verticles will auto reload 
+  when any source is changed. `default: true`
   
-* `buildResources` - when set to `true`, any change to files under the resource directories will trigger a compile. 
-Use this if your resources generate sources. Default is `false`.
+* `buildResources` - when set to `true`, any change to files under the resource directories will trigger a `compile`. 
+Use this if your resources generate sources. `default: false`
 
-* `notificationPort` - the websocket port for notifications to the browser, when used in conjunction with 
-`liveHttpReload` set to `true`. Default is `9999`. 
+* `notificationPort` - websocket port for browser notifications. Used in conjunction with `liveHttpReload: true`. Default is `9999`. 
 
 ### Step 3: Run it
 
@@ -84,12 +88,14 @@ mvn vertx:hot
 Or, in your favourite IDE: 
 
 * __For any IDE__ you'll need a locally installed maven installation. Bundled / Embedded maven installations [do not work](https://github.com/dazraf/vertx-hot/issues/3).
+
 * __IntelliJ IDEA__: 
   * *Run* - open the Maven side-bar, *expand* the `Plugins/vertx` section and *double-click* on `vertx:hot` goal. Any changes to your project's main source (*e.g.* `src/main`) will cause a hot deploy. 
   * *Debug* - *right-click* on the `vertx:hot` goal and *select* `Debug`.
+  
 * __Eclipse__:
   * *Run* - create maven build runner for `vertx:hot` goal. For Eclipse Mars on OS X, I found I had to set the JAVA_HOME environment variable in the runner. Once setup, `Run` it.
-  * *Debug* - as above, but instead of `Run`, `Debug`.
+  * *Debug* - as above, but instead of `Run`, `Debug`
 
 ### Step 4: Stopping the plugin
 
@@ -107,8 +113,8 @@ To run either:
 3. `cd example1` or `cd example2`
 4. `mvn vertx:hot`
 5. Browse to [http://localhost:8888](http://localhost:8888)
-6. Open up the project in your favourite IDE/Editor and try changing some code 
-7. Watch the command line for the rebuild and reload into the browser (would be neat if we could auto-reload in the browser ...)
+6. Open up the project in your favourite IDE/Editor and try changing some code or static resources
+7. The browser will automatically reload. The IDE/shell console will show the unload | recompile | reload activity.
 
 ## Design Notes
  
@@ -119,4 +125,3 @@ To run either:
 With many thanks:
 
 * [illuminace](https://github.com/illuminace)
-
