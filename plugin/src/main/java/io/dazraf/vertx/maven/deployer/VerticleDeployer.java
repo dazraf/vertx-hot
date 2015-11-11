@@ -81,18 +81,25 @@ public class VerticleDeployer implements Closeable {
   }
 
   private String deployVerticle(String verticleClassName, DeploymentOptions deploymentOptions) throws Throwable {
-    CountDownLatch latch = new CountDownLatch(1);
-    AtomicReference<AsyncResult<String>> result = new AtomicReference<>();
-
-    vertx.deployVerticle(verticleClassName, deploymentOptions, ar -> {
-      result.set(ar);
-      latch.countDown();
-    });
-    latch.await();
-    if (result.get().failed()) {
-      throw result.get().cause();
+    try {
+      CountDownLatch latch = new CountDownLatch(1);
+      AtomicReference<AsyncResult<String>> result = new AtomicReference<>();
+      vertx.deployVerticle(verticleClassName, deploymentOptions, ar -> {
+        result.set(ar);
+        latch.countDown();
+      });
+      latch.await();
+      if (result.get().failed()) {
+        throw result.get().cause();
+      }
+      return result.get().result();
+    } catch (Error err) {
+      // Vertx throws a generic java.lang.Error on Verticle compilation failure
+      if (!(err instanceof VirtualMachineError)) {
+        logger.error("on compiling verticle {}", verticleClassName, err);
+      }
+      throw err;
     }
-    return result.get().result();
   }
 
   private DeploymentOptions createIsolatingDeploymentOptions(List<String> classPaths, Optional<String> config) throws IOException {
