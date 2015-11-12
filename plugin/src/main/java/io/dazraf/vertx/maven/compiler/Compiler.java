@@ -31,7 +31,8 @@ public class Compiler {
    *
    * @param project This is the top level maven project that was provided by the maven run time when the plugin was invoked
    * @return the result of compilation containing the classpaths etc
-   * @throws Exception if there was any error
+   * @throws CompilerException for any compiler errors
+   * @throws MavenInvocationException for any unexpected maven invocation errors
    */
   public CompileResult compile(MavenProject project) throws CompilerException, MavenInvocationException {
 
