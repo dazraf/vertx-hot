@@ -1,10 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
   <parent>
     <groupId>io.dazraf</groupId>
     <artifactId>vertx-hot-parent</artifactId>
-    <version>1.0.4-SNAPSHOT</version>
+    <version>1.0.3-SNAPSHOT</version>
   </parent>
 
   <artifactId>example1</artifactId>
@@ -59,7 +61,7 @@
       <plugin>
         <groupId>io.dazraf</groupId>
         <artifactId>vertx-hot-maven-plugin</artifactId>
-        <version>1.0.4-SNAPSHOT</version>
+        <version>1.0.3-SNAPSHOT</version>
         <configuration>
           <verticleClassName>io.dazraf.service.App</verticleClassName>
           <configFile>config.json</configFile>
@@ -108,14 +110,15 @@
             </goals>
             <configuration>
               <transformers>
-                <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+                <transformer
+                  implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
                   <manifestEntries>
                     <Main-Class>io.dazraf.service.App</Main-Class>
                     <Main-Verticle>io.dazraf.service.App</Main-Verticle>
                   </manifestEntries>
                 </transformer>
               </transformers>
-              <artifactSet />
+              <artifactSet/>
               <outputFile>${project.build.directory}/${project.artifactId}-${project.version}-fat.jar</outputFile>
             </configuration>
           </execution>
