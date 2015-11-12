@@ -51,7 +51,7 @@ Add the following to your project `pom.xml`:
 <plugin>
     <groupId>io.dazraf</groupId>
     <artifactId>vertx-hot-maven-plugin</artifactId>
-    <version>1.0.2</version>
+    <version>1.0.3</version>
     <configuration>
         <verticleClassName>**YourVerticle**</verticleClassName>
         <configFile>**YourVerticleConfigFile**</configFile>
