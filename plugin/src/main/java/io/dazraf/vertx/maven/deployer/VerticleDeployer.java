@@ -111,11 +111,14 @@ public class VerticleDeployer implements Closeable {
   }
 
   private DeploymentOptions assignConfig(List<String> classPaths, Optional<String> config, DeploymentOptions deploymentOptions) throws IOException {
+    JsonObject jsonConfig;
     if (config.isPresent()) {
-      JsonObject jsonConfig = loadConfig(classPaths, config.get());
-      jsonConfig.put("devmode", true);
-      deploymentOptions.setConfig(jsonConfig);
+      jsonConfig = loadConfig(classPaths, config.get());
+    } else {
+      jsonConfig = new JsonObject();
     }
+    jsonConfig.put("devmode", true);
+    deploymentOptions.setConfig(jsonConfig);
     return deploymentOptions;
   }
 

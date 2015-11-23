@@ -1,9 +1,0 @@
-{
-  "port": 8888,
-  "db": {
-    "db_name": "TaskApp",
-    "useObjectId": false,
-    "host": "localhost",
-    "port": 27017
-  }
-}
