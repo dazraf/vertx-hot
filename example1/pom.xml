@@ -4,7 +4,7 @@
   <parent>
     <groupId>io.dazraf</groupId>
     <artifactId>vertx-hot-parent</artifactId>
-    <version>1.0.4-SNAPSHOT</version>
+    <version>2.0.0-SNAPSHOT</version>
   </parent>
 
   <artifactId>example1</artifactId>
@@ -59,7 +59,7 @@
       <plugin>
         <groupId>io.dazraf</groupId>
         <artifactId>vertx-hot-maven-plugin</artifactId>
-        <version>1.0.4-SNAPSHOT</version>
+        <version>2.0.0-SNAPSHOT</version>
         <configuration>
           <verticleReference>io.dazraf.service.App</verticleReference>
           <configFile>config.json</configFile>

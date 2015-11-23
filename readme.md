@@ -51,7 +51,7 @@ Add the following to your project `pom.xml`:
 <plugin>
     <groupId>io.dazraf</groupId>
     <artifactId>vertx-hot-maven-plugin</artifactId>
-    <version>1.0.3</version>
+    <version>2.0.0</version>
     <configuration>
         <verticleReference>class or service name</verticleReference>
         <configFile>config filename</configFile>
@@ -63,7 +63,9 @@ The `configuration` has the following elements:
 
 **Required**
 
-* `verticleReference` - either the fully-qualified reference to the top-level verticle of your application or a [service reference](https://github.com/vert-x3/vertx-service-factory).
+* `verticleReference` - either the fully-qualified reference to the top-level verticle of your application or a 
+[service reference](https://github.com/vert-x3/vertx-service-factory). Please note that for services, the service configuration
+must not state an `isolationGroup`.
 
 **Optional**
  
