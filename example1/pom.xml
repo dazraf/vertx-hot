@@ -61,7 +61,7 @@
         <artifactId>vertx-hot-maven-plugin</artifactId>
         <version>1.0.4-SNAPSHOT</version>
         <configuration>
-          <verticleClassName>io.dazraf.service.App</verticleClassName>
+          <verticleReference>io.dazraf.service.App</verticleReference>
           <configFile>config.json</configFile>
         </configuration>
       </plugin>

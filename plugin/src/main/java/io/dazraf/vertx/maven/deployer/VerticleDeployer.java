@@ -66,9 +66,9 @@ public class VerticleDeployer implements Closeable {
     }
   }
 
-  public Closeable deploy(String verticleClassName, List<String> classPaths, Optional<String> config) throws Throwable {
+  public Closeable deploy(String verticleReference, List<String> classPaths, Optional<String> config) throws Throwable {
     DeploymentOptions deploymentOptions = createIsolatingDeploymentOptions(classPaths, config);
-    final String verticleId = deployVerticle(verticleClassName, deploymentOptions);
+    final String verticleId = deployVerticle(verticleReference, deploymentOptions);
     return verticleId == null ? null : () -> {
       try {
         CountDownLatch closeLatch = new CountDownLatch(1);
@@ -80,11 +80,11 @@ public class VerticleDeployer implements Closeable {
     };
   }
 
-  private String deployVerticle(String verticleClassName, DeploymentOptions deploymentOptions) throws Throwable {
+  private String deployVerticle(String verticleReference, DeploymentOptions deploymentOptions) throws Throwable {
     try {
       CountDownLatch latch = new CountDownLatch(1);
       AtomicReference<AsyncResult<String>> result = new AtomicReference<>();
-      vertx.deployVerticle(verticleClassName, deploymentOptions, ar -> {
+      vertx.deployVerticle(verticleReference, deploymentOptions, ar -> {
         result.set(ar);
         latch.countDown();
       });
@@ -96,7 +96,7 @@ public class VerticleDeployer implements Closeable {
     } catch (Error err) {
       // Vertx throws a generic java.lang.Error on Verticle compilation failure
       if (!(err instanceof VirtualMachineError)) {
-        logger.error("on compiling verticle {}", verticleClassName, err);
+        logger.error("on compiling verticle {}", verticleReference, err);
       }
       throw err;
     }

@@ -53,7 +53,7 @@ Add the following to your project `pom.xml`:
     <artifactId>vertx-hot-maven-plugin</artifactId>
     <version>1.0.3</version>
     <configuration>
-        <verticleClassName>**YourVerticle**</verticleClassName>
+        <verticleReference>**your verticle classname or service reference**</verticleReference>
         <configFile>**YourVerticleConfigFile**</configFile>
     </configuration>
 </plugin>
