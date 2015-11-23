@@ -9,7 +9,6 @@ import io.vertx.core.eventbus.MessageProducer;
 import io.vertx.core.json.JsonObject;
 import org.apache.maven.model.Resource;
 import org.apache.maven.project.MavenProject;
-import org.apache.maven.shared.invoker.MavenInvocationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import rx.Observable;
@@ -216,7 +215,7 @@ public class HotDeploy {
     // deploy
     try {
       logger.info("Starting deployment");
-      Closeable closeable = verticleDeployer.deploy(parameters.getVerticleClassName(), compileResult.getClassPath(), parameters.getConfigFileName());
+      Closeable closeable = verticleDeployer.deploy(parameters.getVerticleReference(), compileResult.getClassPath(), parameters.getConfigFileName());
       sendStatus(DeployStatus.DEPLOYED);
       return closeable;
     } catch (Throwable e) {

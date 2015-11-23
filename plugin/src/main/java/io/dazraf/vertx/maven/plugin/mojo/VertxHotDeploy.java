@@ -17,8 +17,8 @@ import org.apache.maven.project.MavenProject;
   requiresDependencyResolution = ResolutionScope.COMPILE_PLUS_RUNTIME,
   requiresDependencyCollection = ResolutionScope.COMPILE_PLUS_RUNTIME)
 public class VertxHotDeploy extends AbstractMojo {
-  @Parameter(property = "verticleClass", required = true)
-  private String verticleClassName = "";
+  @Parameter(property = "verticleReference", required = true)
+  private String verticleReference = "";
 
   @Parameter(property = "configFile", required = false)
   private String configFile = null;
@@ -44,7 +44,7 @@ public class VertxHotDeploy extends AbstractMojo {
     try {
       HotDeploy.run(HotDeployParameters.create()
         .withProject(project)
-        .withVerticleClassName(verticleClassName)
+        .withVerticleReference(verticleReference)
         .withConfigFileName(configFile)
         .withLiveHttpReload(liveHttpReload)
         .withBuildResources(buildResources)

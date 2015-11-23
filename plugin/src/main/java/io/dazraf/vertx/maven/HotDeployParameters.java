@@ -7,7 +7,7 @@ import java.util.Optional;
 
 public class HotDeployParameters {
   private MavenProject project;
-  private String verticleClassName;
+  private String verticleReference;
   private Optional<String> configFileName;
   private boolean liveHttpReload;
   private boolean buildResources;
@@ -22,8 +22,8 @@ public class HotDeployParameters {
     return this;
   }
 
-  public HotDeployParameters withVerticleClassName(String verticleClassName) {
-    this.verticleClassName = verticleClassName;
+  public HotDeployParameters withVerticleReference(String verticleReference) {
+    this.verticleReference = verticleReference;
     return this;
   }
 
@@ -51,8 +51,8 @@ public class HotDeployParameters {
     return project;
   }
 
-  public String getVerticleClassName() {
-    return verticleClassName;
+  public String getVerticleReference() {
+    return verticleReference;
   }
 
   public Optional<String> getConfigFileName() {
@@ -74,7 +74,7 @@ public class HotDeployParameters {
   @Override
   public String toString() {
     JsonObject result = new JsonObject();
-    result.put("verticleClassName", verticleClassName)
+    result.put("verticleReference", verticleReference)
       .put("configFileName", configFileName.orElse("undefined"))
       .put("liveHttpReload", liveHttpReload)
       .put("buildResources", buildResources)
