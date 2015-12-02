@@ -67,7 +67,8 @@
           <extraPaths>
             <extraPath>
               <path>specialPath/causesRedeploy.md</path>
-              <action>Redeploy</action>
+              <!-- default -->
+              <!-- <action>Redeploy</action> -->
             </extraPath>
             <extraPath>
               <path>specialPath/causesCompile.md</path>
