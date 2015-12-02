@@ -77,6 +77,26 @@ Use this if your resources generate sources. `default: false`
 
 * `notificationPort` - websocket port for browser notifications. Used in conjunction with `liveHttpReload: true`. Default is `9999`. 
 
+* `extraPaths` - list of additional paths to be watched. This has a list of `<extraPath>` elements. Example as follows:
+
+```
+<extraPaths>
+  <extraPath>
+    <path>specialPath/causesRedeploy.md</path>
+    <!-- default -->
+    <!-- <action>Redeploy</action> -->
+  </extraPath>
+  <extraPath>
+    <path>specialPath/causesCompile.md</path>
+    <action>Recompile</action>
+  </extraPath>
+  <extraPath>
+    <path>specialPath/causesRefresh.md</path>
+    <action>Refresh</action>
+  </extraPath>
+</extraPaths>
+```
+
 ### Step 3: Run it
 
 You can run it either on the command line with:

@@ -11,6 +11,8 @@ import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.plugins.annotations.ResolutionScope;
 import org.apache.maven.project.MavenProject;
 
+import java.util.List;
+
 @Mojo(name = "hot",
   requiresProject = true,
   threadSafe = true,
@@ -32,6 +34,9 @@ public class VertxHotDeploy extends AbstractMojo {
   @Parameter(property = "notificationPort", required = false, defaultValue = "9999")
   private int notificationPort = 9999;
 
+  @Parameter(property = "extraPaths", required = false, name = "extraPaths")
+  private List<ExtraPath> extraPaths;
+
   /**
    * The enclosing project.
    */
@@ -48,7 +53,8 @@ public class VertxHotDeploy extends AbstractMojo {
         .withConfigFileName(configFile)
         .withLiveHttpReload(liveHttpReload)
         .withBuildResources(buildResources)
-        .withNotificationPort(notificationPort));
+        .withNotificationPort(notificationPort)
+        .withExtraPaths(extraPaths));
     } catch (Exception e) {
       log.error(e);
       throw new MojoExecutionException("Failed to startup hot redeploy", e);

@@ -66,9 +66,7 @@ public class Compiler {
     InvocationRequest request = new DefaultInvocationRequest();
     request.setPomFile(project.getFile());
 
-    request.setOutputHandler(msg -> {
-      collectResults(msg, messages, classPath);
-    });
+    request.setOutputHandler(msg -> collectResults(msg, messages, classPath));
 
     request.setGoals(GOALS);
     request.setProperties(compilerProperties);

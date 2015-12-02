@@ -9,10 +9,6 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
 public class AppController {
-  private static final Logger logger = LoggerFactory.getLogger(AppController.class);
-  private static final ObjectMapper objectMapper = new ObjectMapper();
-  private static final String TASK_DB = "TaskApp";
-  private static final String TASK_COLLECTION = "Tasks";
 
   private boolean flag = false; // used to flip the message from
 
