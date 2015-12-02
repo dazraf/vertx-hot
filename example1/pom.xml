@@ -63,6 +63,21 @@
         <configuration>
           <verticleReference>io.dazraf.service.App</verticleReference>
           <configFile>config.json</configFile>
+          <buildResources>false</buildResources>
+          <extraPaths>
+            <extraPath>
+              <path>specialPath/causesRedeploy.md</path>
+              <action>Redeploy</action>
+            </extraPath>
+            <extraPath>
+              <path>specialPath/causesCompile.md</path>
+              <action>Recompile</action>
+            </extraPath>
+            <extraPath>
+              <path>specialPath/causesRefresh.md</path>
+              <action>Refresh</action>
+            </extraPath>
+          </extraPaths>
         </configuration>
       </plugin>
 

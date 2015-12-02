@@ -17,8 +17,6 @@ public class PathWatcher {
   private final static Logger logger = LoggerFactory.getLogger(PathWatcher.class);
 
   public static Observable<Path> create(final Path path) throws Exception {
-    logger.info("Watching: {}", path);
-
     PublishSubject<Path> subject = PublishSubject.create();
 
     if (path.toFile().isDirectory()) {

@@ -7,7 +7,6 @@ import io.dazraf.vertx.maven.deployer.VerticleDeployer;
 import io.dazraf.vertx.maven.filewatcher.PathWatcher;
 import io.vertx.core.eventbus.MessageProducer;
 import io.vertx.core.json.JsonObject;
-import org.apache.maven.model.Resource;
 import org.apache.maven.project.MavenProject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -16,18 +15,15 @@ import rx.Subscription;
 
 import java.io.*;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
-import static java.util.function.Function.identity;
-import static java.util.stream.Stream.empty;
 import static java.util.stream.Stream.of;
 
 public class HotDeploy {
+
   public enum DeployStatus {
     COMPILING,
     DEPLOYING,
@@ -42,6 +38,8 @@ public class HotDeploy {
   private final VerticleDeployer verticleDeployer;
   private final MessageProducer<JsonObject> statusProducer;
   private final AtomicReference<Closeable> currentDeployment = new AtomicReference<>();
+  private final PathsSupport pathsSupport;
+  private final AtomicReference<CompileResult> lastCompileResult = new AtomicReference<>();
 
   public static void run(HotDeployParameters parameters) throws Exception {
     logger.info("Running HOTDEPLOY with {}", parameters.toString());
@@ -50,6 +48,7 @@ public class HotDeploy {
 
   private HotDeploy(HotDeployParameters parameters) {
     this.parameters = parameters;
+    this.pathsSupport = new PathsSupport(parameters);
     this.verticleDeployer = new VerticleDeployer(parameters.isLiveHttpReload(), parameters.getNotificationPort());
     this.statusProducer = verticleDeployer.createEventProducer();
   }
@@ -64,11 +63,15 @@ public class HotDeploy {
       this::onError,
       this::onComplete);
 
+    Subscription redeployableFileEvent = watchRedeployableFileEvents()
+      .buffer(1, TimeUnit.SECONDS)
+      .subscribe(this::onRedeployableFileEvent, this::onError);
+
     Subscription refreshableFileSubscription = watchRefreshableFileEvents()
       .buffer(1, TimeUnit.SECONDS)
       .subscribe(this::onRefreshableFileEvent, this::onError);
 
-    compileAndDeploy();
+    compile();
 
     waitForNewLine();
 
@@ -76,70 +79,50 @@ public class HotDeploy {
     sendStatus(DeployStatus.STOPPED);
     compilableFileSubscription.unsubscribe();
     refreshableFileSubscription.unsubscribe();
+    redeployableFileEvent.unsubscribe();
     verticleDeployer.close();
     logger.info("done");
   }
 
-
+  // --- File watching functions ---
   private Observable<Path> watchCompilableFileEvents() {
+    logger.info("compilable paths");
     return Observable.merge(
-      getCompilableFilePaths()
+      pathsSupport.pathsThatRequireCompile().stream()
+        .peek(p -> logger.info(p.toString()))
         .map(this::createWatch)
         .collect(Collectors.toList()));
   }
+
+  private Observable<Path> watchRedeployableFileEvents() {
+    logger.info("redeployable paths");
+    return Observable.merge(
+      pathsSupport.pathsThatRequireRedeploy().stream()
+        .peek(p -> logger.info(p.toString()))
+        .map(this::createWatch)
+        .collect(Collectors.toList()));
+  }
+
 
   private Observable<Path> watchRefreshableFileEvents() {
+    logger.info("refreshable paths");
     return Observable.merge(
-      getWatchableResources()
+      pathsSupport.pathsThatRequireBrowserRefresh().stream()
+        .peek(p -> logger.info(p.toString()))
         .map(this::createWatch)
         .collect(Collectors.toList()));
   }
 
-  private Observable<Path> createWatch(String path) {
+  private Observable<Path> createWatch(Path path) {
     try {
-      return PathWatcher.create(Paths.get(path));
+      return PathWatcher.create(path);
     } catch (Exception e) {
       logger.error("Error in creating path watcher for path: " + path, e);
       throw new RuntimeException(e);
     }
   }
 
-  private Stream<String> getCompilableFilePaths() {
-    return of(
-      project().getCompileSourceRoots().stream(), // set of compile sources
-      getBuildableResources(), // the resources
-      of(project().getFile().getAbsolutePath()) // the pom file itself
-    )
-      .flatMap(identity());
-  }
-
-  private Stream<String> getBuildableResources() {
-    if (parameters.isBuildResources()) {
-      return project().getResources().stream().map(Resource::getDirectory);
-    } else {
-      return empty();
-    }
-  }
-
-  private Stream<String> getWatchableResources() {
-    if (parameters.isLiveHttpReload() && !parameters.isBuildResources()) {
-      return project().getResources().stream().map(Resource::getDirectory);
-    } else {
-      return empty();
-    }
-  }
-
-  private MavenProject project() {
-    return parameters.getProject();
-  }
-
-  private void waitForNewLine() throws IOException {
-    new BufferedReader(new InputStreamReader(System.in)).readLine();
-  }
-
-  private void printLastMessage() {
-    System.out.println("Press ENTER to finish");
-  }
+  // --- File event handlers ---
 
   private void onComplete() {
     logger.info("Stopping...");
@@ -155,60 +138,74 @@ public class HotDeploy {
         logger.info("file change detected:");
         paths.stream().forEach(path -> logger.info(path.toString()));
       }
-      compileAndDeploy();
+      compile(); // we compile for the edge case where paths == null to trigger the first build
+      printLastMessage();
+    }
+  }
+
+  private void onRedeployableFileEvent(List<Path> paths) {
+    if (paths != null && paths.size() > 0) {
+      deploy();
+      printLastMessage();
     }
   }
 
   private void onRefreshableFileEvent(List<Path> paths) {
     if (paths != null && paths.size() > 0) {
-      if (pathsContainConfig(paths)) {
-        compileAndDeploy();
-      } else {
-        sendStatus(DeployStatus.DEPLOYED);
-      }
+      refreshBrowser();
     }
   }
 
-  private boolean pathsContainConfig(List<Path> paths) {
-    return paths.stream().anyMatch(f -> parameters.getConfigFileName().map(f::endsWith).orElse(false));
-  }
+  // --- Core Functions -- //
 
-  private void compileAndDeploy() {
-    long startTime = markFileDetected();
+  private void compile() {
+    long startTime = markFileDetectedAction();
     logger.info("Compiling...");
     sendStatus(DeployStatus.COMPILING);
 
     try {
-      CompileResult compileResult = compiler.compile(project());
+      lastCompileResult.set(compiler.compile(project()));
       logger.info("Done");
-      loadApp(compileResult);
-      markRedeployed(startTime);
+      markActionCompleted(startTime, "Compiled");
+      deploy();
     } catch(CompilerException e) {
       sendStatus(e);
     } catch(Exception e) {
       logger.error("error", e);
       sendStatus(e);
     }
-    printLastMessage();
   }
 
-  private long markFileDetected() {
+  private void deploy() {
+    long startTime = markFileDetectedAction();
+    logger.info("Redeploying...");
+    sendStatus(DeployStatus.DEPLOYING);
+
+    try {
+      currentDeployment.getAndUpdate(existingVerticle -> {
+        sendStatus(DeployStatus.DEPLOYING);
+        closeExistingVerticle(existingVerticle);
+        return deployNewVerticle(lastCompileResult.get());
+      });
+
+      markActionCompleted(startTime, currentDeployment.get() != null ? "Deployed" : "Deployment failed");
+    } catch(Exception e) {
+      logger.error("error", e);
+      sendStatus(e);
+    }
+  }
+
+  private void refreshBrowser() {
+    sendStatus(DeployStatus.DEPLOYED);
+  }
+
+  private long markFileDetectedAction() {
     return System.nanoTime();
   }
 
-  private void markRedeployed(long startTime) {
+  private void markActionCompleted(long startTime, String actionMsg) {
     long nanos = System.nanoTime() - startTime;
-    String status = currentDeployment.get() != null ? "Compiled and redeployed" : "Deployment failed";
-    logger.info("{} in {}s", status, String.format("%1.3f", nanos * 1E-9));
-  }
-
-  private void loadApp(CompileResult compileResult) {
-    // atomic
-    currentDeployment.getAndUpdate(existingVerticle -> {
-      sendStatus(DeployStatus.DEPLOYING);
-      closeExistingVerticle(existingVerticle);
-      return deployNewVerticle(compileResult);
-    });
+    logger.info("{} in {}s", actionMsg, String.format("%1.3f", nanos * 1E-9));
   }
 
   private Closeable deployNewVerticle(CompileResult compileResult) {
@@ -216,7 +213,7 @@ public class HotDeploy {
     try {
       logger.info("Starting deployment");
       Closeable closeable = verticleDeployer.deploy(parameters.getVerticleReference(), compileResult.getClassPath(), parameters.getConfigFileName());
-      sendStatus(DeployStatus.DEPLOYED);
+      refreshBrowser();
       return closeable;
     } catch (Throwable e) {
       sendStatus(e);
@@ -251,4 +248,17 @@ public class HotDeploy {
         .put("status", DeployStatus.FAILED.toString())
         .put("cause", e.getMessage()));
   }
+
+  private MavenProject project() {
+    return parameters.getProject();
+  }
+
+  private void waitForNewLine() throws IOException {
+    new BufferedReader(new InputStreamReader(System.in)).readLine();
+  }
+
+  private void printLastMessage() {
+    System.out.println("Press ENTER to finish");
+  }
+
 }

@@ -14,7 +14,6 @@ import org.slf4j.LoggerFactory;
 
 public class App extends AbstractVerticle {
   private static final Logger logger = LoggerFactory.getLogger(App.class);
-  private static final String TASK_DB = "TaskApp";
   private static final java.lang.String TASK_COLLECTION = "Tasks";
   private static final String WEB_SOCKET_PORT = "/api/notifications";
   private static final String NOTIFICATION_TOPIC = "task.notification";

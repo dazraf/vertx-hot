@@ -52,7 +52,12 @@
         <version>2.0.1-SNAPSHOT</version>
         <configuration>
           <verticleReference>service:service.example2</verticleReference>
-          <configFile>config.json</configFile>
+          <extraPaths>
+            <extraPath>
+              <path>extra.watched.file.json</path>
+              <verticleAction>Recompile</verticleAction>
+            </extraPath>
+          </extraPaths>
         </configuration>
       </plugin>
 
