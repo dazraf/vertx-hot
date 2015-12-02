@@ -51,7 +51,7 @@ Add the following to your project `pom.xml`:
 <plugin>
     <groupId>io.dazraf</groupId>
     <artifactId>vertx-hot-maven-plugin</artifactId>
-    <version>2.0.0</version>
+    <version>2.1.0</version>
     <configuration>
         <verticleReference>class or service name</verticleReference>
         <configFile>config filename</configFile>
