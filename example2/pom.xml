@@ -44,7 +44,6 @@
 
   <build>
     <plugins>
-
       <!-- vertx:hot plugin -->
       <plugin>
         <groupId>io.dazraf</groupId>
@@ -52,12 +51,7 @@
         <version>2.1.0</version>
         <configuration>
           <verticleReference>service:service.example2</verticleReference>
-          <extraPaths>
-            <extraPath>
-              <path>extra.watched.file.json</path>
-              <verticleAction>Recompile</verticleAction>
-            </extraPath>
-          </extraPaths>
+          <configFile>service.example2.json</configFile>
         </configuration>
       </plugin>
 
