@@ -9,13 +9,12 @@ import org.slf4j.LoggerFactory;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
 /**
  * This class represents the primary interaction with the Maven runtime to build the project
  */
 public class Compiler {
-  private static final Logger logger = LoggerFactory.getLogger(Compiler.class);
+  private static final Logger LOGGER = LoggerFactory.getLogger(Compiler.class);
   private static final Pattern ERROR_PATTERN = Pattern.compile("\\[ERROR\\] [^:]+:\\[\\d+,\\d+\\].*");
   private static final Pattern DEPENDENCY_RESOLUTION_PATTERN = Pattern.compile("^\\[INFO\\].*:compile:(.*)$");
   private static final List<String> GOALS = Collections.singletonList("dependency:resolve compile");
@@ -29,7 +28,8 @@ public class Compiler {
   /**
    * Compile the maven project, returning the list of classpath paths as reported by maven
    *
-   * @param project This is the top level maven project that was provided by the maven run time when the plugin was invoked
+   * @param project This is the top level maven project that was provided by the maven run time when the plugin
+   *                was invoked
    * @return the result of compilation containing the classpaths etc
    * @throws CompilerException for any compiler errors
    * @throws MavenInvocationException for any unexpected maven invocation errors
@@ -52,12 +52,12 @@ public class Compiler {
       InvocationResult result = new DefaultInvoker().execute(request);
 
       if (result.getExitCode() != 0) {
-        logger.error("Error with exit code {}", result.getExitCode());
+        LOGGER.error("Error with exit code {}", result.getExitCode());
         throw new CompilerException(result.getExitCode(), messages);
       }
       return new CompileResult(classPath);
     } catch (MavenInvocationException e) {
-      logger.error("Maven invocation exception:", e);
+      LOGGER.error("Maven invocation exception:", e);
       throw e;
     }
   }
@@ -78,10 +78,11 @@ public class Compiler {
     if (matcher.matches()) {
       String dependency = matcher.group(1);
       classPath.add(dependency);
-    }
-    if (ERROR_PATTERN.matcher(msg).matches()) {
+    } else if (ERROR_PATTERN.matcher(msg).matches()) {
       System.out.println(msg);
       messages.add(msg);
+    } else {
+      LOGGER.trace("> {}", msg);
     }
   }
 }

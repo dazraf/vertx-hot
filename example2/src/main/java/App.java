@@ -112,6 +112,7 @@ public class App extends AbstractVerticle {
   }
 
   private void bindCreateTask(Router router) {
+
     router.post("/api/task").handler(rc -> {
       HttpServerResponse response = rc.response();
       JsonObject task = rc.getBodyAsJson();

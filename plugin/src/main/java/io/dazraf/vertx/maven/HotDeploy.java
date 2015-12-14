@@ -5,22 +5,27 @@ import io.dazraf.vertx.maven.compiler.Compiler;
 import io.dazraf.vertx.maven.compiler.CompilerException;
 import io.dazraf.vertx.maven.deployer.VerticleDeployer;
 import io.dazraf.vertx.maven.filewatcher.PathWatcher;
-import io.vertx.core.eventbus.MessageProducer;
+import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import org.apache.maven.project.MavenProject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import rx.Observable;
 import rx.Subscription;
+import rx.functions.Action1;
+import rx.subjects.PublishSubject;
 
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.Closeable;
+import java.io.IOException;
+import java.io.InputStreamReader;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
-import static java.util.stream.Stream.of;
+import static java.util.stream.Collectors.toList;
 
 public class HotDeploy {
 
@@ -33,27 +38,44 @@ public class HotDeploy {
   }
 
   private static final Logger logger = LoggerFactory.getLogger(HotDeploy.class);
+  private final Awaitable awaitable;
   private final HotDeployParameters parameters;
   private final Compiler compiler = new Compiler();
   private final VerticleDeployer verticleDeployer;
-  private final MessageProducer<JsonObject> statusProducer;
+  private final PublishSubject<JsonObject> statusSubject;
   private final AtomicReference<Closeable> currentDeployment = new AtomicReference<>();
   private final PathsSupport pathsSupport;
   private final AtomicReference<CompileResult> lastCompileResult = new AtomicReference<>();
 
   public static void run(HotDeployParameters parameters) throws Exception {
-    logger.info("Running HOTDEPLOY with {}", parameters.toString());
-    new HotDeploy(parameters).run();
+    run(parameters, createWaitForNewLine());
   }
 
-  private HotDeploy(HotDeployParameters parameters) {
+  public static void run(HotDeployParameters parameters, Awaitable awaitable) throws Exception {
+    logger.info("Running HOTDEPLOY with {}", parameters.toString());
+    new HotDeploy(parameters, awaitable).run();
+  }
+
+
+  HotDeploy(HotDeployParameters parameters, Awaitable awaitable, Action1<JsonObject> statusObserver) {
+    this(parameters, awaitable);
+    subscribeToStatusUpdates(statusObserver);
+  }
+
+  private HotDeploy(HotDeployParameters parameters, Awaitable awaitable) {
+    this.statusSubject = PublishSubject.create();
     this.parameters = parameters;
     this.pathsSupport = new PathsSupport(parameters);
     this.verticleDeployer = new VerticleDeployer(parameters.isLiveHttpReload(), parameters.getNotificationPort());
-    this.statusProducer = verticleDeployer.createEventProducer();
+    subscribeToStatusUpdates(verticleDeployer.createStatusConsumer());
+    this.awaitable = awaitable;
   }
 
-  private void run() throws Exception {
+  private void subscribeToStatusUpdates(Action1<JsonObject> observer) {
+    statusSubject.subscribe(observer);
+  }
+
+  void run() throws Exception {
     logger.info("Starting up file watchers");
 
     Subscription compilableFileSubscription = watchCompilableFileEvents()
@@ -73,7 +95,7 @@ public class HotDeploy {
 
     compile();
 
-    waitForNewLine();
+    awaitable.await();
 
     logger.info("shutting down ...");
     sendStatus(DeployStatus.STOPPED);
@@ -91,7 +113,7 @@ public class HotDeploy {
       pathsSupport.pathsThatRequireCompile().stream()
         .peek(p -> logger.info(p.toString()))
         .map(this::createWatch)
-        .collect(Collectors.toList()));
+        .collect(toList()));
   }
 
   private Observable<Path> watchRedeployableFileEvents() {
@@ -100,7 +122,7 @@ public class HotDeploy {
       pathsSupport.pathsThatRequireRedeploy().stream()
         .peek(p -> logger.info(p.toString()))
         .map(this::createWatch)
-        .collect(Collectors.toList()));
+        .collect(toList()));
   }
 
 
@@ -110,7 +132,7 @@ public class HotDeploy {
       pathsSupport.pathsThatRequireBrowserRefresh().stream()
         .peek(p -> logger.info(p.toString()))
         .map(this::createWatch)
-        .collect(Collectors.toList()));
+        .collect(toList()));
   }
 
   private Observable<Path> createWatch(Path path) {
@@ -237,28 +259,46 @@ public class HotDeploy {
   }
 
   private void sendStatus(DeployStatus deployStatus) {
-    statusProducer.write(
+    statusSubject.onNext(
       new JsonObject()
         .put("status", deployStatus.toString()));
   }
 
   private void sendStatus(Throwable e) {
-    statusProducer.write(
-      new JsonObject()
-        .put("status", DeployStatus.FAILED.toString())
-        .put("cause", e.getMessage()));
+    JsonObject status = new JsonObject()
+      .put("status", DeployStatus.FAILED.toString())
+      .put("cause", e.getMessage());
+
+    if (e instanceof CompilerException) {
+      CompilerException ce = (CompilerException)e;
+      JsonArray messages = new JsonArray(ce.getMessages().stream().collect(toList()));
+      status.put("messages", messages);
+    }
+
+    statusSubject.onNext(status);
   }
 
   private MavenProject project() {
     return parameters.getProject();
   }
 
-  private void waitForNewLine() throws IOException {
-    new BufferedReader(new InputStreamReader(System.in)).readLine();
+  private static Awaitable createWaitForNewLine() {
+    return () -> {
+      try {
+        new BufferedReader(new InputStreamReader(System.in)).readLine();
+      } catch (IOException e) {
+        logger.error("whilst awaiting new line", e);
+      }
+    };
   }
 
   private void printLastMessage() {
     System.out.println("Press ENTER to finish");
   }
 
+
+  @FunctionalInterface
+  interface Awaitable {
+    void await();
+  }
 }

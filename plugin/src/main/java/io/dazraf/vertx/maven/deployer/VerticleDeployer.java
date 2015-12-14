@@ -5,11 +5,11 @@ import io.vertx.core.AsyncResult;
 import io.vertx.core.DeploymentOptions;
 import io.vertx.core.Vertx;
 import io.vertx.core.VertxOptions;
-import io.vertx.core.eventbus.MessageProducer;
 import io.vertx.core.impl.VertxWrapper;
 import io.vertx.core.json.JsonObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import rx.functions.Action1;
 
 import java.io.Closeable;
 import java.io.File;
@@ -47,8 +47,10 @@ public class VerticleDeployer implements Closeable {
     }
   }
 
-  public MessageProducer<JsonObject> createEventProducer() {
-    return vertx.eventBus().publisher(WebNotificationService.TOPIC);
+  public Action1<JsonObject> createStatusConsumer() {
+    return (status) -> {
+      vertx.eventBus().publish(WebNotificationService.TOPIC, status);
+    };
   }
 
   public void close() {
