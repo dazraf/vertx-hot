@@ -1,0 +1,8 @@
+{
+  "main": "App",
+  "options": {
+    "config": {
+      "port": 8888
+    }
+  }
+}
