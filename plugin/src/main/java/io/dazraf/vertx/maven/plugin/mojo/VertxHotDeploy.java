@@ -1,7 +1,7 @@
 package io.dazraf.vertx.maven.plugin.mojo;
 
-import io.dazraf.vertx.maven.HotDeploy;
-import io.dazraf.vertx.maven.HotDeployParameters;
+import io.dazraf.vertx.HotDeploy;
+import io.dazraf.vertx.maven.MavenHotDeployParameters;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
@@ -12,6 +12,7 @@ import org.apache.maven.plugins.annotations.ResolutionScope;
 import org.apache.maven.project.MavenProject;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Mojo(name = "hot",
   requiresProject = true,
@@ -35,7 +36,7 @@ public class VertxHotDeploy extends AbstractMojo {
   private int notificationPort = 9999;
 
   @Parameter(property = "extraPaths", required = false, name = "extraPaths")
-  private List<ExtraPath> extraPaths;
+  private List<ExtraPathParam> extraPaths;
 
   /**
    * The enclosing project.
@@ -47,14 +48,15 @@ public class VertxHotDeploy extends AbstractMojo {
   public void execute() throws MojoExecutionException, MojoFailureException {
     Log log = getLog();
     try {
-      HotDeploy.run(HotDeployParameters.create()
+      HotDeploy.run(MavenHotDeployParameters.create()
         .withProject(project)
         .withVerticleReference(verticleReference)
         .withConfigFileName(configFile)
         .withLiveHttpReload(liveHttpReload)
         .withBuildResources(buildResources)
         .withNotificationPort(notificationPort)
-        .withExtraPaths(extraPaths));
+        .withExtraPaths(extraPaths != null ?
+                extraPaths.stream().map(ExtraPathParam::getExtraPath).collect(Collectors.toList()) : null));
     } catch (Exception e) {
       log.error(e);
       throw new MojoExecutionException("Failed to startup hot redeploy", e);

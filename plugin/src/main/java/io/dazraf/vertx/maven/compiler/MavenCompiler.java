@@ -1,27 +1,29 @@
 package io.dazraf.vertx.maven.compiler;
 
-import org.apache.maven.model.Resource;
-import org.apache.maven.project.MavenProject;
+import io.dazraf.vertx.HotDeployParameters;
+import io.dazraf.vertx.compiler.CompileResult;
+import io.dazraf.vertx.compiler.Compiler;
+import io.dazraf.vertx.compiler.CompilerException;
 import org.apache.maven.shared.invoker.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
 /**
  * This class represents the primary interaction with the Maven runtime to build the project
  */
-public class Compiler {
-  private static final Logger logger = LoggerFactory.getLogger(Compiler.class);
+public class MavenCompiler implements Compiler {
+  private static final Logger logger = LoggerFactory.getLogger(MavenCompiler.class);
   private static final Pattern ERROR_PATTERN = Pattern.compile("\\[ERROR\\] [^:]+:\\[\\d+,\\d+\\].*");
   private static final Pattern DEPENDENCY_RESOLUTION_PATTERN = Pattern.compile("^\\[INFO\\].*:compile:(.*)$");
   private static final List<String> GOALS = Collections.singletonList("dependency:resolve compile");
   private final Properties compilerProperties = new Properties();
 
-  public Compiler() {
+  public MavenCompiler() {
     compilerProperties.setProperty("outputAbsoluteArtifactFilename", "true");
   }
 
@@ -29,22 +31,16 @@ public class Compiler {
   /**
    * Compile the maven project, returning the list of classpath paths as reported by maven
    *
-   * @param project This is the top level maven project that was provided by the maven run time when the plugin was invoked
+   * @param params the deployment parameters
    * @return the result of compilation containing the classpaths etc
    * @throws CompilerException for any compiler errors
    * @throws MavenInvocationException for any unexpected maven invocation errors
    */
-  public CompileResult compile(MavenProject project) throws CompilerException, MavenInvocationException {
-
-    List<String> classPath = new ArrayList<>();
-    // precendence to load from the resources folders rather than the build
-    project.getResources().stream().map(Resource::getDirectory).forEach(classPath::add);
-    classPath.add(project.getBuild().getOutputDirectory());
-
+  @Override
+  public CompileResult compile(HotDeployParameters params) throws CompilerException, MavenInvocationException {
     Set<String> messages = new HashSet<>();
-    InvocationRequest request = setupInvocationRequest(project, classPath, messages);
-
-    return execute(request, messages, classPath);
+    InvocationRequest request = setupInvocationRequest(params.getBuildFile(), params.getClasspath(), messages);
+    return execute(request, messages, params.getClasspath());
   }
 
   private CompileResult execute(InvocationRequest request, Set<String> messages, List<String> classPath) throws CompilerException, MavenInvocationException  {
@@ -53,7 +49,7 @@ public class Compiler {
 
       if (result.getExitCode() != 0) {
         logger.error("Error with exit code {}", result.getExitCode());
-        throw new CompilerException(result.getExitCode(), messages);
+        throw new CompilerException(getClass(), result.getExitCode(), messages);
       }
       return new CompileResult(classPath);
     } catch (MavenInvocationException e) {
@@ -62,9 +58,9 @@ public class Compiler {
     }
   }
 
-  private InvocationRequest setupInvocationRequest(MavenProject project, List<String> classPath, Set<String> messages) {
+  private InvocationRequest setupInvocationRequest(File buildFile, List<String> classPath, Set<String> messages) {
     InvocationRequest request = new DefaultInvocationRequest();
-    request.setPomFile(project.getFile());
+    request.setPomFile(buildFile);
 
     request.setOutputHandler(msg -> collectResults(msg, messages, classPath));
 

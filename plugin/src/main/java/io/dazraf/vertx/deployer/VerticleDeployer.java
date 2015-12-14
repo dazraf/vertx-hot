@@ -1,6 +1,6 @@
-package io.dazraf.vertx.maven.deployer;
+package io.dazraf.vertx.deployer;
 
-import io.dazraf.vertx.maven.web.WebNotificationService;
+import io.dazraf.vertx.web.WebNotificationService;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.DeploymentOptions;
 import io.vertx.core.Vertx;

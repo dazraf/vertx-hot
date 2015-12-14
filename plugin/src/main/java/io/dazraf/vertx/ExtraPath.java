@@ -1,23 +1,16 @@
-package io.dazraf.vertx.maven.plugin.mojo;
+package io.dazraf.vertx;
 
-import org.apache.maven.plugins.annotations.Parameter;
 
 public class ExtraPath {
 
-  public enum VertxHotAction {
+  public static enum VertxHotAction {
     Nothing,
     Refresh,
     Redeploy,
     Recompile
   }
 
-  public ExtraPath() {
-  }
-
-  @Parameter(name = "path", required = true)
   private String path;
-
-  @Parameter(name = "action", defaultValue = "Redeploy", required = false)
   private VertxHotAction action = VertxHotAction.Redeploy;
 
   public String getPath() {
@@ -43,4 +36,13 @@ public class ExtraPath {
   }
 
   public boolean willCauseRefresh() { return action == VertxHotAction.Refresh; }
+
+  @Override
+  public String toString() {
+    return "ExtraPath{" +
+            "path='" + path + '\'' +
+            ", action=" + action +
+            '}';
+  }
+
 }

@@ -1,26 +1,26 @@
-package io.dazraf.vertx.maven;
+package io.dazraf.vertx;
 
-import io.dazraf.vertx.maven.compiler.CompileResult;
-import io.dazraf.vertx.maven.compiler.Compiler;
-import io.dazraf.vertx.maven.compiler.CompilerException;
-import io.dazraf.vertx.maven.deployer.VerticleDeployer;
-import io.dazraf.vertx.maven.filewatcher.PathWatcher;
+import io.dazraf.vertx.compiler.Compiler;
+import io.dazraf.vertx.compiler.CompileResult;
+import io.dazraf.vertx.compiler.CompilerException;
+import io.dazraf.vertx.deployer.VerticleDeployer;
+import io.dazraf.vertx.filewatcher.PathWatcher;
 import io.vertx.core.eventbus.MessageProducer;
 import io.vertx.core.json.JsonObject;
-import org.apache.maven.project.MavenProject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import rx.Observable;
 import rx.Subscription;
 
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.Closeable;
+import java.io.IOException;
+import java.io.InputStreamReader;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
-
-import static java.util.stream.Stream.of;
 
 public class HotDeploy {
 
@@ -34,7 +34,7 @@ public class HotDeploy {
 
   private static final Logger logger = LoggerFactory.getLogger(HotDeploy.class);
   private final HotDeployParameters parameters;
-  private final Compiler compiler = new Compiler();
+  private final Compiler compiler;
   private final VerticleDeployer verticleDeployer;
   private final MessageProducer<JsonObject> statusProducer;
   private final AtomicReference<Closeable> currentDeployment = new AtomicReference<>();
@@ -51,6 +51,11 @@ public class HotDeploy {
     this.pathsSupport = new PathsSupport(parameters);
     this.verticleDeployer = new VerticleDeployer(parameters.isLiveHttpReload(), parameters.getNotificationPort());
     this.statusProducer = verticleDeployer.createEventProducer();
+    try {
+      this.compiler = parameters.getCompilerClass().newInstance();
+    } catch (IllegalAccessException|InstantiationException e) {
+      throw new RuntimeException(e);
+    }
   }
 
   private void run() throws Exception {
@@ -164,7 +169,7 @@ public class HotDeploy {
     sendStatus(DeployStatus.COMPILING);
 
     try {
-      lastCompileResult.set(compiler.compile(project()));
+      lastCompileResult.set(compiler.compile(parameters));
       logger.info("Done");
       markActionCompleted(startTime, "Compiled");
       deploy();
@@ -211,7 +216,7 @@ public class HotDeploy {
   private Closeable deployNewVerticle(CompileResult compileResult) {
     // deploy
     try {
-      logger.info("Starting deployment");
+      logger.info("Starting deployment using classspath {}", compileResult.getClassPath());
       Closeable closeable = verticleDeployer.deploy(parameters.getVerticleReference(), compileResult.getClassPath(), parameters.getConfigFileName());
       refreshBrowser();
       return closeable;
@@ -247,10 +252,6 @@ public class HotDeploy {
       new JsonObject()
         .put("status", DeployStatus.FAILED.toString())
         .put("cause", e.getMessage()));
-  }
-
-  private MavenProject project() {
-    return parameters.getProject();
   }
 
   private void waitForNewLine() throws IOException {

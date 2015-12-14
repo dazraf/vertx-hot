@@ -1,8 +1,4 @@
-package io.dazraf.vertx.maven;
-
-import io.dazraf.vertx.maven.plugin.mojo.ExtraPath;
-import org.apache.maven.model.Resource;
-import org.apache.maven.project.MavenProject;
+package io.dazraf.vertx;
 
 import java.io.File;
 import java.nio.file.Files;
@@ -14,9 +10,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static java.util.function.Function.identity;
-import static java.util.stream.Stream.concat;
-import static java.util.stream.Stream.empty;
-import static java.util.stream.Stream.of;
+import static java.util.stream.Stream.*;
 
 public class PathsSupport {
   private final HotDeployParameters parameters;
@@ -66,15 +60,15 @@ public class PathsSupport {
 
   private Stream<Path> getCompilableFilePaths() {
     return of(
-      project().getCompileSourceRoots().stream(), // set of compile sources
+      parameters.getCompileSourcePaths().stream(), // set of compile sources
       getBuildableResources(), // the resources
-      of(project().getFile().getAbsolutePath()) // the pom file itself
+      of(parameters.getBuildFile().getAbsolutePath()) // the pom file itself
     ).flatMap(identity()).map(Paths::get);
   }
 
   private Stream<String> getBuildableResources() {
     if (parameters.isBuildResources()) {
-      return project().getResources().stream().map(Resource::getDirectory);
+      return parameters.getResourcePaths().stream();
     } else {
       return empty();
     }
@@ -82,14 +76,10 @@ public class PathsSupport {
 
   private Stream<Path> getWatchableResources() {
     if (parameters.isLiveHttpReload() && !parameters.isBuildResources()) {
-      return project().getResources().stream().map(Resource::getDirectory).map(Paths::get);
+      return parameters.getResourcePaths().stream().map(Paths::get);
     } else {
       return empty();
     }
-  }
-
-  private MavenProject project() {
-    return parameters.getProject();
   }
 
   private Stream<Path> getExtraRedeployPaths() {
@@ -124,7 +114,7 @@ public class PathsSupport {
     if (path.isAbsolute()) {
       return path;
     } else {
-      File file = parameters.getProject().getFile();
+      File file = parameters.getBuildFile();
       if (file != null) {
         Path parent = file.toPath().getParent();
         if (parent != null) {
@@ -140,16 +130,14 @@ public class PathsSupport {
       return path;
     }
 
-    return parameters.getProject().getResources().stream()
+    return parameters.getResourcePaths().stream()
       // try to find the config file in the resource paths
-      .map(Resource::getDirectory)
       .map(Paths::get)
       .map(resourceDirPath -> resourceDirPath.resolve(path))
       .filter(fullPath -> Files.exists(fullPath))
       .findFirst()
       // .. otherwise, append to the first resource path and hope that the config appears there during hot-development
-      .orElseGet(() -> parameters.getProject().getResources().stream()
-        .map(Resource::getDirectory)
+      .orElseGet(() -> parameters.getResourcePaths().stream()
         .map(Paths::get)
         .map(directory -> directory.resolve(path))
         .findFirst()

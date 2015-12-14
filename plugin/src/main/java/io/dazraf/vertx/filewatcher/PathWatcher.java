@@ -1,4 +1,4 @@
-package io.dazraf.vertx.maven.filewatcher;
+package io.dazraf.vertx.filewatcher;
 
 import com.darylteo.nio.DirectoryChangedSubscriber;
 import com.darylteo.nio.DirectoryWatcher;

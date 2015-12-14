@@ -1,6 +1,6 @@
 package io.vertx.core.impl;
 
-import io.dazraf.vertx.maven.web.HttpServerRequestWrapper;
+import io.dazraf.vertx.web.HttpServerRequestWrapper;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;

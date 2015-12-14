@@ -1,6 +1,7 @@
-package io.dazraf.vertx.maven;
+package io.dazraf.vertx;
 
-import io.dazraf.vertx.maven.plugin.mojo.ExtraPath;
+import io.dazraf.vertx.maven.MavenHotDeployParameters;
+import io.dazraf.vertx.maven.plugin.mojo.ExtraPathParam;
 import org.apache.maven.model.Resource;
 import org.apache.maven.project.MavenProject;
 import org.junit.Test;
@@ -11,6 +12,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static io.dazraf.vertx.ExtraPath.VertxHotAction.*;
 import static java.util.Arrays.asList;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.mock;
@@ -40,15 +42,15 @@ public class PathsSupportTest {
     when(project.getFile()).thenReturn(pomFullPath.toFile());
     when(project.getResources()).thenReturn(Collections.singletonList(resource));
 
-    HotDeployParameters hotDeployParameters = new HotDeployParameters()
+    HotDeployParameters hotDeployParameters = new MavenHotDeployParameters()
       .withProject(project)
       .withLiveHttpReload(true)
       .withConfigFileName(CONFIG_PATH)
       .withBuildResources(true)
       .withExtraPaths(asList(
-        new ExtraPath().withPath(RELOAD_BROWSER_EXTRA_PATH).withAction(ExtraPath.VertxHotAction.Refresh),
-        new ExtraPath().withPath(REDEPLOY_EXTRA_PATH).withAction(ExtraPath.VertxHotAction.Redeploy),
-        new ExtraPath().withPath(COMPILE_EXTRA_PATH).withAction(ExtraPath.VertxHotAction.Recompile)
+        new ExtraPath().withPath(RELOAD_BROWSER_EXTRA_PATH).withAction(Refresh),
+        new ExtraPath().withPath(REDEPLOY_EXTRA_PATH).withAction(Redeploy),
+        new ExtraPath().withPath(COMPILE_EXTRA_PATH).withAction(Recompile)
       ));
 
     PathsSupport pathsSupport = new PathsSupport(hotDeployParameters);
@@ -77,15 +79,15 @@ public class PathsSupportTest {
     when(project.getFile()).thenReturn(pomFullPath.toFile());
     when(project.getResources()).thenReturn(Collections.singletonList(resource));
 
-    HotDeployParameters hotDeployParameters = new HotDeployParameters()
+    HotDeployParameters hotDeployParameters = new MavenHotDeployParameters()
       .withProject(project)
       .withLiveHttpReload(true)
       .withConfigFileName(CONFIG_PATH2)
       .withBuildResources(true)
       .withExtraPaths(asList(
-        new ExtraPath().withPath(RELOAD_BROWSER_EXTRA_PATH).withAction(ExtraPath.VertxHotAction.Refresh),
-        new ExtraPath().withPath(REDEPLOY_EXTRA_PATH).withAction(ExtraPath.VertxHotAction.Redeploy),
-        new ExtraPath().withPath(COMPILE_EXTRA_PATH).withAction(ExtraPath.VertxHotAction.Recompile)
+        new ExtraPath().withPath(RELOAD_BROWSER_EXTRA_PATH).withAction(Refresh),
+        new ExtraPath().withPath(REDEPLOY_EXTRA_PATH).withAction(Redeploy),
+        new ExtraPath().withPath(COMPILE_EXTRA_PATH).withAction(Recompile)
       ));
 
     PathsSupport pathSupport = new PathsSupport(hotDeployParameters);

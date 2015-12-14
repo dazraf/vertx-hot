@@ -1,4 +1,4 @@
-package io.dazraf.vertx.maven.compiler;
+package io.dazraf.vertx.compiler;
 
 import java.util.List;
 
