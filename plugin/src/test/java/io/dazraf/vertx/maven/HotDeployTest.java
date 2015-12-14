@@ -94,7 +94,7 @@ public class HotDeployTest {
     Runnable hotDeploy = createHotDeploy(port, parameters, latch, deployStatusRef, httpStatusRef);
 
     hotDeploy.run();
-    latch.await(10, TimeUnit.SECONDS);
+    latch.await(30, TimeUnit.SECONDS);
 
     assertEquals(200, httpStatusRef.get());
     assertEquals(DeployStatus.DEPLOYED, deployStatusRef.get());
