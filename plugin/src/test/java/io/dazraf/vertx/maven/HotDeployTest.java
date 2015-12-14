@@ -13,6 +13,8 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.io.IOException;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -22,7 +24,7 @@ public class HotDeployTest {
   private static final Logger LOGGER = LoggerFactory.getLogger(HotDeployTest.class);
 
   @Test
-  public void testHotDeployWithoutConfigFile() throws Exception {
+  public void testFQNDeployWithoutConfig() throws Exception {
     int port = 8080; // the default port assuming config hasn't loaded
     String testProject = "src/test/testprojects/simple";
     MavenProject project = createMavenProject(testProject);
@@ -33,21 +35,11 @@ public class HotDeployTest {
       .withVerticleReference("App")
       .withLiveHttpReload(false);
 
-    final CountDownLatch latch = new CountDownLatch(1);
-    final AtomicReference<DeployStatus> deployStatusRef = new AtomicReference<>();
-    final AtomicInteger httpStatusRef = new AtomicInteger();
-
-    HotDeploy hotDeploy = createHotDeploy(port, parameters, latch, deployStatusRef, httpStatusRef);
-
-    hotDeploy.run();
-    latch.await();
-
-    assertEquals(200, httpStatusRef.get());
-    assertEquals(DeployStatus.DEPLOYED, deployStatusRef.get());
+    hotDeployAndCheckService(port, parameters);
   }
 
   @Test
-  public void testHotDeployWithConfigFile() throws Exception {
+  public void testFQNDeployWithConfig() throws Exception {
     int port = 8888; // if the config loaded correctly, the http server will be found here
     String testProject = "src/test/testprojects/simple";
     MavenProject project = createMavenProject(testProject);
@@ -59,21 +51,27 @@ public class HotDeployTest {
       .withConfigFileName("config.json")
       .withLiveHttpReload(false);
 
-    final CountDownLatch latch = new CountDownLatch(1);
-    final AtomicReference<DeployStatus> deployStatusRef = new AtomicReference<>();
-    final AtomicInteger httpStatusRef = new AtomicInteger();
-
-    HotDeploy hotDeploy = createHotDeploy(port, parameters, latch, deployStatusRef, httpStatusRef);
-
-    hotDeploy.run();
-    latch.await();
-
-    assertEquals(200, httpStatusRef.get());
-    assertEquals(DeployStatus.DEPLOYED, deployStatusRef.get());
+    hotDeployAndCheckService(port, parameters);
   }
 
   @Test
-  public void testService() throws Exception {
+  public void testServiceWithoutConfig() throws Exception {
+    int port = 8080; // the default port assuming config hasn't loaded
+    String testProject = "src/test/testprojects/servicetest";
+    MavenProject project = createMavenProject(testProject);
+
+    HotDeployParameters parameters = HotDeployParameters
+      .create()
+      .withProject(project)
+      .withVerticleReference("service:simpleservice.noconfig")
+      .withLiveHttpReload(false);
+
+    hotDeployAndCheckService(port, parameters);
+  }
+
+
+  @Test
+  public void testServiceWithConfig() throws Exception {
     int port = 8888; // if the config loaded correctly, the service HTTP server will be here
     String testProject = "src/test/testprojects/servicetest";
     MavenProject project = createMavenProject(testProject);
@@ -84,21 +82,26 @@ public class HotDeployTest {
       .withVerticleReference("service:simpleservice")
       .withLiveHttpReload(false);
 
+    hotDeployAndCheckService(port, parameters);
+  }
+
+
+  private void hotDeployAndCheckService(int port, HotDeployParameters parameters) throws Exception {
     final CountDownLatch latch = new CountDownLatch(1);
     final AtomicReference<DeployStatus> deployStatusRef = new AtomicReference<>();
     final AtomicInteger httpStatusRef = new AtomicInteger();
 
-    HotDeploy hotDeploy = createHotDeploy(port, parameters, latch, deployStatusRef, httpStatusRef);
+    Runnable hotDeploy = createHotDeploy(port, parameters, latch, deployStatusRef, httpStatusRef);
 
     hotDeploy.run();
-    latch.await();
+    latch.await(10, TimeUnit.SECONDS);
 
     assertEquals(200, httpStatusRef.get());
     assertEquals(DeployStatus.DEPLOYED, deployStatusRef.get());
   }
 
-  private HotDeploy createHotDeploy(int port, HotDeployParameters parameters, CountDownLatch latch, AtomicReference<DeployStatus> deployStatusRef, AtomicInteger httpStatusRef) {
-    return new HotDeploy(parameters, () -> awaitLatch(latch), status -> {
+  private Runnable createHotDeploy(int port, HotDeployParameters parameters, CountDownLatch latch, AtomicReference<DeployStatus> deployStatusRef, AtomicInteger httpStatusRef) {
+    HotDeploy hotDeploy = new HotDeploy(parameters, () -> awaitLatch(latch), status -> {
         try {
           LOGGER.info(status.encodePrettily());
           final DeployStatus deployStatus = DeployStatus.valueOf(status.getString("status"));
@@ -116,6 +119,16 @@ public class HotDeployTest {
           LOGGER.error("ignore", incase);
         }
       });
+    return () -> {
+      Executors.newSingleThreadExecutor().execute(() -> {
+        try {
+          hotDeploy.run();
+        } catch (Exception e) {
+          LOGGER.error("failed to execute hotDeploy.run", e);
+          latch.countDown();
+        }
+      });
+    };
   }
 
   private MavenProject createMavenProject(String projectRootPath) throws IOException {
