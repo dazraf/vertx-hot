@@ -27,7 +27,7 @@ public class CompilerTest {
     project.setFile(projectFile);
     project.getBuild().setOutputDirectory(projectFile.getParentFile().toPath().resolve("target/classes").toFile().getCanonicalPath());
     final CompileResult compileResult = compiler.compile(project);
-    Pattern pattern = Pattern.compile("(^.+\\.jar$)|(^.+/target$)");
+    Pattern pattern = Pattern.compile("(^.+\\.jar$)|(^.+/target/classes$)");
     assertTrue(compileResult.getClassPath().size() > 0);
     compileResult.getClassPath().stream().forEach(path -> {
       LOGGER.info("checking: {}", path);
