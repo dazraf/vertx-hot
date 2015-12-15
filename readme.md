@@ -2,6 +2,8 @@
 ### A Maven plugin for hot reload of Vert.x Verticles
 ---
 
+[![Join the chat at https://gitter.im/dazraf/vertx-hot](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/dazraf/vertx-hot?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+
 [![Build Status](https://travis-ci.org/dazraf/vertx-hot.svg?branch=master)](https://travis-ci.org/dazraf/vertx-hot)
 
 ## Contents
