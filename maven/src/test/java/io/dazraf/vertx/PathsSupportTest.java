@@ -1,7 +1,6 @@
 package io.dazraf.vertx;
 
 import io.dazraf.vertx.maven.MavenHotDeployParameters;
-import io.dazraf.vertx.maven.plugin.mojo.ExtraPathParam;
 import org.apache.maven.model.Resource;
 import org.apache.maven.project.MavenProject;
 import org.junit.Test;
@@ -95,7 +94,7 @@ public class PathsSupportTest {
     paths.contains(resourcesFullPath.resolve(CONFIG_PATH2));
   }
 
-  private final <T> Set<String> toSet(Path root, String... args) {
+  private Set<String> toSet(Path root, String... args) {
     return Arrays.stream(args).map(p -> root.resolve(p).toString()).collect(Collectors.toSet());
   }
 

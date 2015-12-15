@@ -39,6 +39,7 @@ public class MavenCompiler implements Compiler {
   @Override
   public CompileResult compile(HotDeployParameters params) throws CompilerException, MavenInvocationException {
     Set<String> messages = new HashSet<>();
+    logger.info("Configuring compilation with {}", params);
     InvocationRequest request = setupInvocationRequest(params.getBuildFile(), params.getClasspath(), messages);
     return execute(request, messages, params.getClasspath());
   }

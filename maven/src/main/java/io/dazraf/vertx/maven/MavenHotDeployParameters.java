@@ -150,7 +150,8 @@ public class MavenHotDeployParameters implements HotDeployParameters {
                     extraPaths
                             .map(Arrays::asList)
                             .orElse(emptyList())
-            ));
+            ))
+            .put("classpath", getClasspath());
     return result.toString();
   }
 }
