@@ -4,6 +4,7 @@ import com.darylteo.nio.DirectoryChangedSubscriber;
 import com.darylteo.nio.DirectoryWatcher;
 import com.darylteo.nio.ThreadPoolDirectoryWatchService;
 import org.slf4j.Logger;
+
 import org.slf4j.LoggerFactory;
 import rx.Observable;
 import rx.functions.Action0;

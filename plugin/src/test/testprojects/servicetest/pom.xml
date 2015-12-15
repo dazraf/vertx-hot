@@ -1,16 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
-  <parent>
-    <groupId>io.dazraf</groupId>
-    <artifactId>vertx-hot-parent</artifactId>
-    <version>2.1.1-SNAPSHOT</version>
-  </parent>
 
-  <artifactId>example1</artifactId>
+  <groupId>io.dazraf</groupId>
+  <artifactId>servicetest</artifactId>
+  <version>1.0.0</version>
 
-  <name>example1</name>
-  <description>A simple test vert.x verticle to demonstrate the vertx-hot plugin</description>
+  <name>servicetest</name>
+  <description>simple project to test various aspects of vertx:hot</description>
 
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -56,19 +53,19 @@
 
   <build>
     <plugins>
+      <!--
       <plugin>
         <groupId>io.dazraf</groupId>
         <artifactId>vertx-hot-maven-plugin</artifactId>
         <version>2.1.1-SNAPSHOT</version>
         <configuration>
           <verticleReference>io.dazraf.service.App</verticleReference>
-          <!--<configFile>config.json</configFile>-->
+          <configFile>config.json</configFile>
           <buildResources>false</buildResources>
           <extraPaths>
             <extraPath>
               <path>specialPath/causesRedeploy.md</path>
-              <!-- default -->
-              <!-- <action>Redeploy</action> -->
+              <action>Redeploy</action>
             </extraPath>
             <extraPath>
               <path>specialPath/causesCompile.md</path>
@@ -81,7 +78,7 @@
           </extraPaths>
         </configuration>
       </plugin>
-
+      -->
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-compiler-plugin</artifactId>
@@ -90,26 +87,6 @@
           <source>1.8</source>
           <target>1.8</target>
         </configuration>
-      </plugin>
-
-      <plugin>
-        <groupId>org.codehaus.mojo</groupId>
-        <artifactId>exec-maven-plugin</artifactId>
-        <version>1.3.2</version>
-        <executions>
-          <execution>
-            <id>bower-install</id>
-            <phase>process-resources</phase>
-            <configuration>
-              <executable>bower</executable>
-              <commandlineArgs>install</commandlineArgs>
-              <workingDirectory>${basedir}/src/main/resources</workingDirectory>
-            </configuration>
-            <goals>
-              <goal>exec</goal>
-            </goals>
-          </execution>
-        </executions>
       </plugin>
 
       <plugin>
