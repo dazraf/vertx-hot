@@ -1,23 +1,25 @@
-package io.dazraf.vertx;
+package io.dazraf.vertx.maven.paths;
 
-import io.dazraf.vertx.maven.MavenHotDeployParameters;
-import org.apache.maven.model.Resource;
-import org.apache.maven.project.MavenProject;
+import io.dazraf.vertx.paths.ExtraPath;
+import io.dazraf.vertx.HotDeployParameters;
 import org.junit.Test;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static io.dazraf.vertx.ExtraPath.VertxHotAction.*;
+import static io.dazraf.vertx.paths.ExtraPath.VertxHotAction.*;
 import static java.util.Arrays.asList;
+import static java.util.Collections.singletonList;
 import static org.junit.Assert.assertEquals;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
+import static org.junit.Assert.assertTrue;
 
-public class PathsSupportTest {
+public class MavenPathResolverTest {
   private static final String PROJECT_ROOT = "/myproject";
   private static final String RELOAD_BROWSER_EXTRA_PATH = "reloadBrowserExtraPath";
   private static final String REDEPLOY_EXTRA_PATH = "redeployExtraPath";
@@ -31,20 +33,13 @@ public class PathsSupportTest {
   @Test
   public void thatFileClassificationsWork() {
     Path root = Paths.get(PROJECT_ROOT);
-    Resource resource = mock(Resource.class);
     Path resourcesFullPath = root.resolve(RESOURCES_PATH);
-    when(resource.getDirectory()).thenReturn(resourcesFullPath.toString());
-
-    MavenProject project = mock(MavenProject.class);
     final Path pomFullPath = root.resolve(POM_XML_PATH);
 
-    when(project.getFile()).thenReturn(pomFullPath.toFile());
-    when(project.getResources()).thenReturn(Collections.singletonList(resource));
-
-    HotDeployParameters hotDeployParameters = new MavenHotDeployParameters()
-      .withProject(project)
+    HotDeployParameters hotDeployParameters = new HotDeployParameters()
       .withLiveHttpReload(true)
-      .withConfigFileName(CONFIG_PATH)
+      .withConfigFile(CONFIG_PATH)
+      .withResourcePaths(singletonList(resourcesFullPath.toString()))
       .withBuildResources(true)
       .withExtraPaths(asList(
         new ExtraPath().withPath(RELOAD_BROWSER_EXTRA_PATH).withAction(Refresh),
@@ -52,46 +47,38 @@ public class PathsSupportTest {
         new ExtraPath().withPath(COMPILE_EXTRA_PATH).withAction(Recompile)
       ));
 
-    PathsSupport pathsSupport = new PathsSupport(hotDeployParameters);
-    List<Path> compilePaths = pathsSupport.pathsThatRequireCompile();
+    MavenPathResolver pathResolver = new MavenPathResolver(hotDeployParameters, pomFullPath.toFile());
+    List<Path> compilePaths = pathResolver.pathsThatRequireCompile();
     assertEquals(toSet(root, POM_XML_PATH, RESOURCES_PATH, COMPILE_EXTRA_PATH), pathsToStringSet(compilePaths));
 
-    List<Path> deployPaths = pathsSupport.pathsThatRequireRedeploy();
+    List<Path> deployPaths = pathResolver.pathsThatRequireRedeploy();
     Set<String> expected = Stream.concat(toSet(resourcesFullPath, CONFIG_PATH).stream(), toSet(root, REDEPLOY_EXTRA_PATH).stream()).collect(Collectors.toSet());
     assertEquals(expected, pathsToStringSet(deployPaths));
 
-    List<Path> refreshPaths = pathsSupport.pathsThatRequireBrowserRefresh();
+    List<Path> refreshPaths = pathResolver.pathsThatRequireBrowserRefresh();
     assertEquals(toSet(root, RELOAD_BROWSER_EXTRA_PATH), pathsToStringSet(refreshPaths));
   }
-
 
   @Test
   public void thatConfigFileIsCorrectlyLocated() {
     Path root = Paths.get(PROJECT_ROOT);
-    Resource resource = mock(Resource.class);
     Path resourcesFullPath = root.resolve(RESOURCES_PATH2);
-    when(resource.getDirectory()).thenReturn(resourcesFullPath.toString());
-
-    MavenProject project = mock(MavenProject.class);
     final Path pomFullPath = root.resolve(POM_XML_PATH);
 
-    when(project.getFile()).thenReturn(pomFullPath.toFile());
-    when(project.getResources()).thenReturn(Collections.singletonList(resource));
-
-    HotDeployParameters hotDeployParameters = new MavenHotDeployParameters()
-      .withProject(project)
+    HotDeployParameters hotDeployParameters = new HotDeployParameters()
       .withLiveHttpReload(true)
-      .withConfigFileName(CONFIG_PATH2)
+      .withConfigFile(CONFIG_PATH2)
       .withBuildResources(true)
+      .withResourcePaths(singletonList(resourcesFullPath.toString()))
       .withExtraPaths(asList(
         new ExtraPath().withPath(RELOAD_BROWSER_EXTRA_PATH).withAction(Refresh),
         new ExtraPath().withPath(REDEPLOY_EXTRA_PATH).withAction(Redeploy),
         new ExtraPath().withPath(COMPILE_EXTRA_PATH).withAction(Recompile)
       ));
 
-    PathsSupport pathSupport = new PathsSupport(hotDeployParameters);
-    final List<Path> paths = pathSupport.pathsThatRequireRedeploy();
-    paths.contains(resourcesFullPath.resolve(CONFIG_PATH2));
+    MavenPathResolver pathResolver = new MavenPathResolver(hotDeployParameters, pomFullPath.toFile());
+    final List<Path> paths = pathResolver.pathsThatRequireRedeploy();
+    assertTrue(paths.contains(resourcesFullPath.resolve(CONFIG_PATH2)));
   }
 
   private Set<String> toSet(Path root, String... args) {

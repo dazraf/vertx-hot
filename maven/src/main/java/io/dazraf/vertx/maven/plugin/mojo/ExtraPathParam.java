@@ -1,8 +1,8 @@
 package io.dazraf.vertx.maven.plugin.mojo;
 
-import static io.dazraf.vertx.ExtraPath.VertxHotAction;
+import static io.dazraf.vertx.paths.ExtraPath.VertxHotAction;
 
-import io.dazraf.vertx.ExtraPath;
+import io.dazraf.vertx.paths.ExtraPath;
 import org.apache.maven.plugins.annotations.Parameter;
 
 public class ExtraPathParam {

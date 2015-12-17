@@ -1,34 +1,48 @@
-package io.dazraf.vertx;
+package io.dazraf.vertx.paths;
 
-import java.io.File;
+import io.dazraf.vertx.HotDeployParameters;
+
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static java.util.function.Function.identity;
-import static java.util.stream.Stream.*;
+import static java.util.stream.Stream.concat;
+import static java.util.stream.Stream.empty;
 
-public class PathsSupport {
-  private final HotDeployParameters parameters;
+public abstract class AbstractPathResolver implements PathResolver {
+
+  protected final HotDeployParameters parameters;
+
   private Optional<List<Path>> pathsForCompile = Optional.empty();
   private Optional<List<Path>> pathsForRedeploy = Optional.empty();
   private Optional<List<Path>> pathsForBrowserRefresh = Optional.empty();
 
-  PathsSupport(HotDeployParameters parameters) {
+  protected AbstractPathResolver(HotDeployParameters parameters) {
     this.parameters = parameters;
   }
 
-  List<Path> pathsThatRequireCompile() {
+  @Override
+  public List<String> getClasspath() {
+    List<String> classpath = new ArrayList<>();
+    classpath.addAll(parameters.getResourcePaths());
+    classpath.addAll(parameters.getBuildOutputDirectories());
+    return classpath;
+  }
+
+  @Override
+  public List<Path> pathsThatRequireCompile() {
     return pathsForCompile.orElseGet(() -> // compute and cache the following
       concat(getCompilableFilePaths(), getExtraCompilePaths()).collect(Collectors.toList()) // otherwise return empty list
     );
   }
 
-  List<Path> pathsThatRequireRedeploy() {
+  @Override
+  public List<Path> pathsThatRequireRedeploy() {
     return pathsForRedeploy.orElseGet(() -> // compute and cache the following
       concat(
         getConfigFilePathStream(),
@@ -37,7 +51,8 @@ public class PathsSupport {
     );
   }
 
-  List<Path> pathsThatRequireBrowserRefresh() {
+  @Override
+  public List<Path> pathsThatRequireBrowserRefresh() {
     return pathsForBrowserRefresh.orElseGet(() -> // compute and cache the following
       concat(
         getWatchableResources(),
@@ -45,6 +60,8 @@ public class PathsSupport {
       ).collect(Collectors.toList())// otherwise return empty list
     );
   }
+
+  protected abstract Path getPathToProjectRoot();
 
   private Stream<Path> getExtraCompilePaths() {
     return parameters.getExtraPaths()
@@ -58,15 +75,9 @@ public class PathsSupport {
       .orElse(empty());
   }
 
-  private Stream<Path> getCompilableFilePaths() {
-    return of(
-      parameters.getCompileSourcePaths().stream(), // set of compile sources
-      getBuildableResources(), // the resources
-      of(parameters.getBuildFile().getAbsolutePath()) // the pom file itself
-    ).flatMap(identity()).map(Paths::get);
-  }
+  protected abstract Stream<Path> getCompilableFilePaths();
 
-  private Stream<String> getBuildableResources() {
+  protected Stream<String> getBuildableResources() {
     if (parameters.isBuildResources()) {
       return parameters.getResourcePaths().stream();
     } else {
@@ -107,19 +118,16 @@ public class PathsSupport {
   }
 
   private Stream<Path> getConfigFilePathStream() {
-    return parameters.getConfigFileName().map(Paths::get).map(this::resolveRelativePathToResourceRoot).map(Stream::of).orElse(empty());
+    return parameters.getConfigFilePath().map(Paths::get).map(this::resolveRelativePathToResourceRoot).map(Stream::of).orElse(empty());
   }
 
   private Path resolveRelativePathToProjectRoot(Path path) {
     if (path.isAbsolute()) {
       return path;
     } else {
-      File file = parameters.getBuildFile();
-      if (file != null) {
-        Path parent = file.toPath().getParent();
-        if (parent != null) {
-          return parent.resolve(path);
-        }
+      Path parent = getPathToProjectRoot();
+      if (parent != null) {
+        return parent.resolve(path);
       }
       return path;
     }

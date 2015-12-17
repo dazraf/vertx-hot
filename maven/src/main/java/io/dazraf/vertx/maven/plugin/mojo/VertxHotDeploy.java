@@ -1,7 +1,9 @@
 package io.dazraf.vertx.maven.plugin.mojo;
 
 import io.dazraf.vertx.HotDeploy;
-import io.dazraf.vertx.maven.MavenHotDeployParameters;
+import io.dazraf.vertx.HotDeployParameters;
+import io.dazraf.vertx.maven.MavenHotDeployBuilder;
+import org.apache.maven.model.Resource;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
@@ -13,6 +15,9 @@ import org.apache.maven.project.MavenProject;
 
 import java.util.List;
 import java.util.stream.Collectors;
+
+import static java.util.Collections.singletonList;
+import static java.util.stream.Collectors.toList;
 
 @Mojo(name = "hot",
   requiresProject = true,
@@ -48,15 +53,23 @@ public class VertxHotDeploy extends AbstractMojo {
   public void execute() throws MojoExecutionException, MojoFailureException {
     Log log = getLog();
     try {
-      HotDeploy.run(MavenHotDeployParameters.create()
-        .withProject(project)
-        .withVerticleReference(verticleReference)
-        .withConfigFileName(configFile)
-        .withLiveHttpReload(liveHttpReload)
-        .withBuildResources(buildResources)
-        .withNotificationPort(notificationPort)
-        .withExtraPaths(extraPaths != null ?
-                extraPaths.stream().map(ExtraPathParam::getExtraPath).collect(Collectors.toList()) : null));
+      MavenHotDeployBuilder.create()
+              .withBuildFile(project.getFile())
+              .withHotDeployParameters(new HotDeployParameters()
+                      .withVerticleReference(verticleReference)
+                      .withConfigFile(configFile)
+                      .withLiveHttpReload(liveHttpReload)
+                      .withBuildResources(buildResources)
+                      .withNotificationPort(notificationPort)
+                      .withResourcePaths(project.getResources().stream()
+                              .map(Resource::getDirectory).collect(toList()))
+                      .withCompileSourcePaths(project.getCompileSourceRoots())
+                      .withBuildOutputDirectories(singletonList(project.getBuild()
+                              .getOutputDirectory()))
+                      .withExtraPaths(extraPaths != null ? extraPaths.stream()
+                              .map(ExtraPathParam::getExtraPath).collect(toList()) : null))
+              .build()
+              .run();
     } catch (Exception e) {
       log.error(e);
       throw new MojoExecutionException("Failed to startup hot redeploy", e);

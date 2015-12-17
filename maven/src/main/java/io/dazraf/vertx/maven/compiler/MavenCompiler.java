@@ -1,9 +1,9 @@
 package io.dazraf.vertx.maven.compiler;
 
-import io.dazraf.vertx.HotDeployParameters;
 import io.dazraf.vertx.compiler.CompileResult;
 import io.dazraf.vertx.compiler.Compiler;
 import io.dazraf.vertx.compiler.CompilerException;
+import io.dazraf.vertx.maven.paths.MavenPathResolver;
 import org.apache.maven.shared.invoker.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -17,31 +17,33 @@ import java.util.regex.Pattern;
  * This class represents the primary interaction with the Maven runtime to build the project
  */
 public class MavenCompiler implements Compiler {
+
   private static final Logger LOGGER = LoggerFactory.getLogger(Compiler.class);
   private static final Pattern ERROR_PATTERN = Pattern.compile("\\[ERROR\\] [^:]+:\\[\\d+,\\d+\\].*");
   private static final Pattern DEPENDENCY_RESOLUTION_PATTERN = Pattern.compile("^\\[INFO\\].*:compile:(.*)$");
   private static final List<String> GOALS = Collections.singletonList("dependency:resolve compile");
+
   private final Properties compilerProperties = new Properties();
+  private final MavenPathResolver pathResolver;
 
-  public MavenCompiler() {
-    compilerProperties.setProperty("outputAbsoluteArtifactFilename", "true");
+  public MavenCompiler(MavenPathResolver pathResolver) {
+    this.pathResolver = pathResolver;
+    this.compilerProperties.setProperty("outputAbsoluteArtifactFilename", "true");
   }
-
 
   /**
    * Compile the maven project, returning the list of classpath paths as reported by maven
    *  
-   * @param params the deployment parameters   
    * @return the result of compilation containing the classpaths etc
    * @throws CompilerException for any compiler errors
    * @throws MavenInvocationException for any unexpected maven invocation errors
    */
   @Override
-  public CompileResult compile(HotDeployParameters params) throws CompilerException, MavenInvocationException {
+  public CompileResult compile() throws CompilerException, MavenInvocationException {
     Set<String> messages = new HashSet<>();
-    LOGGER.info("Configuring compilation with {}", params);
-    InvocationRequest request = setupInvocationRequest(params.getBuildFile(), params.getClasspath(), messages);
-    return execute(request, messages, params.getClasspath());
+    InvocationRequest request = setupInvocationRequest(pathResolver.getPomFile(),
+            pathResolver.getClasspath(), messages);
+    return execute(request, messages, pathResolver.getClasspath());
   }
 
   private CompileResult execute(InvocationRequest request, Set<String> messages, List<String> classPath) throws CompilerException, MavenInvocationException  {

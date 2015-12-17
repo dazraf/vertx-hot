@@ -1,4 +1,4 @@
-package io.dazraf.vertx;
+package io.dazraf.vertx.paths;
 
 
 public class ExtraPath {

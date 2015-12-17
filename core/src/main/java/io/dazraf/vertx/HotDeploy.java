@@ -1,10 +1,11 @@
 package io.dazraf.vertx;
 
-import io.dazraf.vertx.compiler.Compiler;
 import io.dazraf.vertx.compiler.CompileResult;
+import io.dazraf.vertx.compiler.Compiler;
 import io.dazraf.vertx.compiler.CompilerException;
 import io.dazraf.vertx.deployer.VerticleDeployer;
 import io.dazraf.vertx.filewatcher.PathWatcher;
+import io.dazraf.vertx.paths.PathResolver;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import org.slf4j.Logger;
@@ -22,7 +23,6 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.stream.Collectors;
 
 import static java.util.stream.Collectors.toList;
 
@@ -37,41 +37,25 @@ public class HotDeploy {
   }
 
   private static final Logger logger = LoggerFactory.getLogger(HotDeploy.class);
-  private final Awaitable awaitable;
-  private final HotDeployParameters parameters;
   private final Compiler compiler;
   private final VerticleDeployer verticleDeployer;
+  private final PathResolver pathResolver;
+  private final Awaitable awaitable;
   private final PublishSubject<JsonObject> statusSubject;
   private final AtomicReference<Closeable> currentDeployment = new AtomicReference<>();
-  private final PathsSupport pathsSupport;
   private final AtomicReference<CompileResult> lastCompileResult = new AtomicReference<>();
 
-  public static void run(HotDeployParameters parameters) throws Exception {
-    run(parameters, createWaitForNewLine());
+  public HotDeploy(Compiler compiler, VerticleDeployer verticleDeployer, PathResolver pathResolver) {
+    this(compiler, verticleDeployer, pathResolver, createWaitForNewLine());
   }
 
-  public static void run(HotDeployParameters parameters, Awaitable awaitable) throws Exception {
-    logger.info("Running HOTDEPLOY with {}", parameters.toString());
-    new HotDeploy(parameters, awaitable).run();
-  }
-
-
-  HotDeploy(HotDeployParameters parameters, Awaitable awaitable, Action1<JsonObject> statusObserver) {
-    this(parameters, awaitable);
-    subscribeToStatusUpdates(statusObserver);
-  }
-
-  private HotDeploy(HotDeployParameters parameters, Awaitable awaitable) {
+  public HotDeploy(Compiler compiler, VerticleDeployer verticleDeployer, PathResolver pathResolver,
+            Awaitable awaitable) {
     this.statusSubject = PublishSubject.create();
-    this.parameters = parameters;
-    this.pathsSupport = new PathsSupport(parameters);
-    this.verticleDeployer = new VerticleDeployer(parameters.isLiveHttpReload(), parameters.getNotificationPort());
+    this.compiler = compiler;
+    this.verticleDeployer = verticleDeployer;
+    this.pathResolver = pathResolver;
     this.awaitable = awaitable;
-    try {
-      this.compiler = parameters.getCompilerClass().newInstance();
-    } catch (IllegalAccessException|InstantiationException e) {
-      throw new RuntimeException(e);
-    }
     subscribeToStatusUpdates(verticleDeployer.createStatusConsumer());
   }
 
@@ -79,7 +63,7 @@ public class HotDeploy {
     statusSubject.subscribe(observer);
   }
 
-  void run() throws Exception {
+  public void run() throws Exception {
     logger.info("Starting up file watchers");
 
     Subscription compilableFileSubscription = watchCompilableFileEvents()
@@ -114,7 +98,7 @@ public class HotDeploy {
   private Observable<Path> watchCompilableFileEvents() {
     logger.info("compilable paths");
     return Observable.merge(
-      pathsSupport.pathsThatRequireCompile().stream()
+      pathResolver.pathsThatRequireCompile().stream()
         .peek(p -> logger.info(p.toString()))
         .map(this::createWatch)
         .collect(toList()));
@@ -123,7 +107,7 @@ public class HotDeploy {
   private Observable<Path> watchRedeployableFileEvents() {
     logger.info("redeployable paths");
     return Observable.merge(
-      pathsSupport.pathsThatRequireRedeploy().stream()
+      pathResolver.pathsThatRequireRedeploy().stream()
         .peek(p -> logger.info(p.toString()))
         .map(this::createWatch)
         .collect(toList()));
@@ -133,7 +117,7 @@ public class HotDeploy {
   private Observable<Path> watchRefreshableFileEvents() {
     logger.info("refreshable paths");
     return Observable.merge(
-      pathsSupport.pathsThatRequireBrowserRefresh().stream()
+      pathResolver.pathsThatRequireBrowserRefresh().stream()
         .peek(p -> logger.info(p.toString()))
         .map(this::createWatch)
         .collect(toList()));
@@ -190,7 +174,7 @@ public class HotDeploy {
     sendStatus(DeployStatus.COMPILING);
 
     try {
-      lastCompileResult.set(compiler.compile(parameters));
+      lastCompileResult.set(compiler.compile());
       logger.info("Done");
       markActionCompleted(startTime, "Compiled");
       deploy();
@@ -238,7 +222,7 @@ public class HotDeploy {
     // deploy
     try {
       logger.info("Starting deployment using classspath {}", compileResult.getClassPath());
-      Closeable closeable = verticleDeployer.deploy(parameters.getVerticleReference(), compileResult.getClassPath(), parameters.getConfigFileName());
+      Closeable closeable = verticleDeployer.deploy(compileResult.getClassPath());
       refreshBrowser();
       return closeable;
     } catch (Throwable e) {
