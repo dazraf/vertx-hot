@@ -33,7 +33,7 @@ public class MavenHotDeployBuilder {
     MavenPathResolver pathResolver = new MavenPathResolver(hotDeployParameters, buildFile);
     MavenCompiler compiler = new MavenCompiler(pathResolver);
     VerticleDeployer verticleDeployer = new GenericVerticleDeployer(hotDeployParameters);
-    return new HotDeploy(compiler, verticleDeployer, pathResolver);
+    return new HotDeploy(compiler, verticleDeployer, pathResolver, hotDeployParameters.getShutdownCondition());
   }
 
 }

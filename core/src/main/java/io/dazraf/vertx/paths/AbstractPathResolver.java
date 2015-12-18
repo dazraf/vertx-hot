@@ -118,7 +118,10 @@ public abstract class AbstractPathResolver implements PathResolver {
   }
 
   private Stream<Path> getConfigFilePathStream() {
-    return parameters.getConfigFilePath().map(Paths::get).map(this::resolveRelativePathToResourceRoot).map(Stream::of).orElse(empty());
+    return parameters.getConfigFilePath()
+      .map(Paths::get)
+      .map(this::resolveRelativePathToResourceRoot)
+      .map(Stream::of).orElse(empty());
   }
 
   private Path resolveRelativePathToProjectRoot(Path path) {

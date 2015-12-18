@@ -21,6 +21,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -45,21 +46,17 @@ public class HotDeploy {
   private final AtomicReference<Closeable> currentDeployment = new AtomicReference<>();
   private final AtomicReference<CompileResult> lastCompileResult = new AtomicReference<>();
 
-  public HotDeploy(Compiler compiler, VerticleDeployer verticleDeployer, PathResolver pathResolver) {
-    this(compiler, verticleDeployer, pathResolver, createWaitForNewLine());
-  }
-
   public HotDeploy(Compiler compiler, VerticleDeployer verticleDeployer, PathResolver pathResolver,
-            Awaitable awaitable) {
+            Optional<Awaitable> awaitable) {
     this.statusSubject = PublishSubject.create();
     this.compiler = compiler;
     this.verticleDeployer = verticleDeployer;
     this.pathResolver = pathResolver;
-    this.awaitable = awaitable;
+    this.awaitable = awaitable.orElseGet(() -> createWaitForNewLine());
     subscribeToStatusUpdates(verticleDeployer.createStatusConsumer());
   }
 
-  private void subscribeToStatusUpdates(Action1<JsonObject> observer) {
+  public void subscribeToStatusUpdates(Action1<JsonObject> observer) {
     statusSubject.subscribe(observer);
   }
 
@@ -282,7 +279,7 @@ public class HotDeploy {
 
 
   @FunctionalInterface
-  interface Awaitable {
+  public interface Awaitable {
     void await();
   }
 }

@@ -1,5 +1,6 @@
 package io.dazraf.vertx;
 
+import io.dazraf.vertx.HotDeploy.Awaitable;
 import io.dazraf.vertx.paths.ExtraPath;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
@@ -14,7 +15,7 @@ import static java.util.Collections.emptyList;
 public class HotDeployParameters {
 
   private String verticleReference;
-  private Optional<String> configFilePath;
+  private Optional<String> configFilePath = Optional.empty();
   private boolean liveHttpReload;
   private boolean buildResources;
   private int notificationPort;
@@ -22,6 +23,7 @@ public class HotDeployParameters {
   private List<String> resourcePaths = new ArrayList<>();
   private List<String> buildOutputDirectories = new ArrayList<>();
   private Optional<List<ExtraPath>> extraPaths = Optional.empty();
+  private Optional<Awaitable> shutdownCondition;
 
   public HotDeployParameters withVerticleReference(String verticleReference) {
     this.verticleReference = verticleReference;
@@ -68,6 +70,18 @@ public class HotDeployParameters {
     return this;
   }
 
+  /**
+   * Specify a custom HotDeploy shutdown condition. By default, HotDeploy waits for
+   * the Enter key.
+   *
+   * @param shutdownCondition
+   * @return
+   */
+  public HotDeployParameters withShutdownCondition(Awaitable shutdownCondition) {
+    this.shutdownCondition = Optional.ofNullable(shutdownCondition);
+    return this;
+  }
+
   public String getVerticleReference() {
     return verticleReference;
   }
@@ -103,6 +117,8 @@ public class HotDeployParameters {
   public Optional<List<ExtraPath>> getExtraPaths() {
     return extraPaths;
   }
+
+  public Optional<Awaitable> getShutdownCondition() { return shutdownCondition; }
 
   @Override
   public String toString() {

@@ -30,7 +30,7 @@ public class BuckHotDeployBuilder {
     BuckPathResolver pathResolver = new BuckPathResolver(parameters);
     BuckCompiler compiler = new BuckCompiler(buildTarget, pathResolver);
     GenericVerticleDeployer verticleDeployer = new GenericVerticleDeployer(parameters);
-    return new HotDeploy(compiler, verticleDeployer, pathResolver);
+    return new HotDeploy(compiler, verticleDeployer, pathResolver, parameters.getShutdownCondition());
   }
 
 }

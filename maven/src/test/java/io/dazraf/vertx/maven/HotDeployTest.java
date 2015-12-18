@@ -1,11 +1,9 @@
 package io.dazraf.vertx.maven;
 
-import io.dazraf.vertx.maven.HotDeploy.DeployStatus;
-import io.dazraf.vertx.maven.compiler.Compiler;
+import io.dazraf.vertx.HotDeploy;
+import io.dazraf.vertx.HotDeploy.DeployStatus;
+import io.dazraf.vertx.HotDeployParameters;
 import io.vertx.core.Vertx;
-import junit.framework.Assert;
-import org.apache.maven.model.Resource;
-import org.apache.maven.project.MavenProject;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -18,80 +16,60 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
+import static java.util.Collections.singletonList;
 import static junit.framework.Assert.assertEquals;
 
 public class HotDeployTest {
   private static final Logger LOGGER = LoggerFactory.getLogger(HotDeployTest.class);
+  private static final String SIMPLE_TEST_PROJECT_ROOT = "src/test/testprojects/simple";
+  private static final String SERVICE_TEST_PROJECT_ROOT = "src/test/testprojects/servicetest";
 
   @Test
   public void testFQNDeployWithoutConfig() throws Exception {
     int port = 8080; // the default port assuming config hasn't loaded
-    String testProject = "src/test/testprojects/simple";
-    MavenProject project = createMavenProject(testProject);
-
-    HotDeployParameters parameters = HotDeployParameters
-      .create()
-      .withProject(project)
+    HotDeployParameters parameters = createHotDeployParameters(SIMPLE_TEST_PROJECT_ROOT)
       .withVerticleReference("App")
       .withLiveHttpReload(false);
-
-    hotDeployAndCheckService(port, parameters);
+    hotDeployAndCheckService(port, new File(SIMPLE_TEST_PROJECT_ROOT + "/pom.xml"), parameters);
   }
 
   @Test
   public void testFQNDeployWithConfig() throws Exception {
     int port = 8888; // if the config loaded correctly, the http server will be found here
-    String testProject = "src/test/testprojects/simple";
-    MavenProject project = createMavenProject(testProject);
-
-    HotDeployParameters parameters = HotDeployParameters
-      .create()
-      .withProject(project)
+    HotDeployParameters parameters = createHotDeployParameters(SIMPLE_TEST_PROJECT_ROOT)
       .withVerticleReference("App")
-      .withConfigFileName("config.json")
+      .withConfigFile("config.json")
       .withLiveHttpReload(false);
-
-    hotDeployAndCheckService(port, parameters);
+    hotDeployAndCheckService(port, new File(SIMPLE_TEST_PROJECT_ROOT + "/pom.xml"), parameters);
   }
 
   @Test
   public void testServiceWithoutConfig() throws Exception {
     int port = 8080; // the default port assuming config hasn't loaded
-    String testProject = "src/test/testprojects/servicetest";
-    MavenProject project = createMavenProject(testProject);
-
-    HotDeployParameters parameters = HotDeployParameters
-      .create()
-      .withProject(project)
+    HotDeployParameters parameters = createHotDeployParameters(SERVICE_TEST_PROJECT_ROOT)
       .withVerticleReference("service:simpleservice.noconfig")
       .withLiveHttpReload(false);
-
-    hotDeployAndCheckService(port, parameters);
+    hotDeployAndCheckService(port, new File(SERVICE_TEST_PROJECT_ROOT + "/pom.xml"), parameters);
   }
 
 
   @Test
   public void testServiceWithConfig() throws Exception {
     int port = 8888; // if the config loaded correctly, the service HTTP server will be here
-    String testProject = "src/test/testprojects/servicetest";
-    MavenProject project = createMavenProject(testProject);
-
-    HotDeployParameters parameters = HotDeployParameters
-      .create()
-      .withProject(project)
+    HotDeployParameters parameters = createHotDeployParameters(SERVICE_TEST_PROJECT_ROOT)
       .withVerticleReference("service:simpleservice")
       .withLiveHttpReload(false);
-
-    hotDeployAndCheckService(port, parameters);
+    hotDeployAndCheckService(port, new File(SERVICE_TEST_PROJECT_ROOT + "/pom.xml"), parameters);
   }
 
 
-  private void hotDeployAndCheckService(int port, HotDeployParameters parameters) throws Exception {
+  private void hotDeployAndCheckService(int port, File buildFile,
+                                        HotDeployParameters parameters) throws Exception {
     final CountDownLatch latch = new CountDownLatch(1);
     final AtomicReference<DeployStatus> deployStatusRef = new AtomicReference<>();
     final AtomicInteger httpStatusRef = new AtomicInteger();
 
-    Runnable hotDeploy = createHotDeploy(port, parameters, latch, deployStatusRef, httpStatusRef);
+    Runnable hotDeploy = createHotDeploy(port, buildFile, parameters, latch, deployStatusRef, httpStatusRef);
 
     hotDeploy.run();
     latch.await(30, TimeUnit.SECONDS);
@@ -100,8 +78,15 @@ public class HotDeployTest {
     assertEquals(DeployStatus.DEPLOYED, deployStatusRef.get());
   }
 
-  private Runnable createHotDeploy(int port, HotDeployParameters parameters, CountDownLatch latch, AtomicReference<DeployStatus> deployStatusRef, AtomicInteger httpStatusRef) {
-    HotDeploy hotDeploy = new HotDeploy(parameters, () -> awaitLatch(latch), status -> {
+  private Runnable createHotDeploy(int port, File buildFile, HotDeployParameters parameters,
+                                   CountDownLatch latch, AtomicReference<DeployStatus> deployStatusRef,
+                                   AtomicInteger httpStatusRef) throws Exception {
+    HotDeploy hotDeploy = MavenHotDeployBuilder.create()
+      .withBuildFile(buildFile)
+      .withHotDeployParameters(parameters
+        .withShutdownCondition(() -> awaitLatch(latch)))
+      .build();
+    hotDeploy.subscribeToStatusUpdates(status -> {
         try {
           LOGGER.info(status.encodePrettily());
           final DeployStatus deployStatus = DeployStatus.valueOf(status.getString("status"));
@@ -119,6 +104,7 @@ public class HotDeployTest {
           LOGGER.error("ignore", incase);
         }
       });
+
     return () -> {
       Executors.newSingleThreadExecutor().execute(() -> {
         try {
@@ -131,15 +117,10 @@ public class HotDeployTest {
     };
   }
 
-  private MavenProject createMavenProject(String projectRootPath) throws IOException {
-    File projectFile = new File(projectRootPath + "/pom.xml").getAbsoluteFile();
-    MavenProject project = new MavenProject();
-    project.setFile(projectFile);
-    project.getBuild().setOutputDirectory(projectFile.getParentFile().toPath().resolve("target/classes").toFile().getCanonicalPath());
-    Resource resource = new Resource();
-    resource.setDirectory(new File(projectRootPath + "/src/main/resources").getAbsolutePath());
-    project.getResources().add(resource);
-    return project;
+  private HotDeployParameters createHotDeployParameters(String projectRootPath) throws IOException {
+    return new HotDeployParameters()
+      .withBuildOutputDirectories(singletonList(new File(projectRootPath).toPath().resolve("target/classes").toFile().getCanonicalPath()))
+      .withResourcePaths(singletonList(new File(projectRootPath + "/src/main/resources").getAbsolutePath()));
   }
 
   private void awaitLatch(CountDownLatch latch) {

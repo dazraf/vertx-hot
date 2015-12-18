@@ -15,11 +15,11 @@
   <packaging>maven-plugin</packaging>
 
   <dependencies>
-      <dependency>
-        <groupId>io.dazraf</groupId>
-        <artifactId>vertx-hot-core</artifactId>
-        <version>${project.version}</version>
-      </dependency>
+    <dependency>
+      <groupId>io.dazraf</groupId>
+      <artifactId>vertx-hot-core</artifactId>
+      <version>${project.version}</version>
+    </dependency>
 
     <dependency>
       <groupId>org.apache.maven.shared</groupId>
@@ -61,6 +61,7 @@
       <artifactId>mockito-core</artifactId>
       <scope>test</scope>
     </dependency>
+
 
   </dependencies>
 

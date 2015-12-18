@@ -1,11 +1,10 @@
-package io.dazraf.vertx.maven;
+package io.dazraf.vertx.maven.compiler;
 
-import io.dazraf.vertx.maven.compiler.CompileResult;
-import io.dazraf.vertx.maven.compiler.Compiler;
-import io.dazraf.vertx.maven.compiler.CompilerException;
-import org.apache.maven.project.MavenProject;
+import io.dazraf.vertx.HotDeployParameters;
+import io.dazraf.vertx.compiler.CompileResult;
+import io.dazraf.vertx.compiler.CompilerException;
+import io.dazraf.vertx.maven.paths.MavenPathResolver;
 import org.apache.maven.shared.invoker.MavenInvocationException;
-import org.junit.Assert;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -14,6 +13,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.regex.Pattern;
 
+import static java.util.Collections.singletonList;
 import static org.junit.Assert.assertTrue;
 
 public class CompilerTest {
@@ -22,11 +22,14 @@ public class CompilerTest {
   @Test
   public void testCompileExample1() throws CompilerException, MavenInvocationException, IOException {
     File projectFile = new File("../example1/pom.xml").getAbsoluteFile();
-    Compiler compiler = new Compiler();
-    MavenProject project = new MavenProject();
-    project.setFile(projectFile);
-    project.getBuild().setOutputDirectory(projectFile.getParentFile().toPath().resolve("target/classes").toFile().getCanonicalPath());
-    final CompileResult compileResult = compiler.compile(project);
+    String buildOutputDir = projectFile.getParentFile().toPath().resolve("target/classes").toFile().getCanonicalPath();
+    MavenPathResolver pathResolver = new MavenPathResolver(
+      new HotDeployParameters().withBuildOutputDirectories(
+        singletonList(buildOutputDir)
+      ),
+      projectFile);
+    MavenCompiler compiler = new MavenCompiler(pathResolver);
+    final CompileResult compileResult = compiler.compile();
     Pattern pattern = Pattern.compile("(^.+\\.jar$)|(^.+/target/classes$)");
     assertTrue(compileResult.getClassPath().size() > 0);
     compileResult.getClassPath().stream().forEach(path -> {
@@ -34,6 +37,6 @@ public class CompilerTest {
       assertTrue(pattern.matcher(path).matches());
     });
 
-    assertTrue(compileResult.getClassPath().contains(project.getBuild().getOutputDirectory()));
+    assertTrue(compileResult.getClassPath().contains(buildOutputDir));
   }
 }
