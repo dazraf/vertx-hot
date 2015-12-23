@@ -10,3 +10,5 @@
 example/db/**
 **/src/main/resources/bower_components
 **/file-uploads
+buck-out
+.buckd

@@ -140,6 +140,7 @@
     <module>example2</module>
     <module>core</module>
     <module>buck</module>
+    <module>example-buck</module>
   </modules>
 
   <profiles>
