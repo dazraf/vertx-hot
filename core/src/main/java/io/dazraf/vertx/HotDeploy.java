@@ -52,7 +52,7 @@ public class HotDeploy {
     this.compiler = compiler;
     this.verticleDeployer = verticleDeployer;
     this.pathResolver = pathResolver;
-    this.awaitable = awaitable.orElseGet(() -> createWaitForNewLine());
+    this.awaitable = awaitable.orElseGet(HotDeploy::createWaitForNewLine);
     subscribeToStatusUpdates(verticleDeployer.createStatusConsumer());
   }
 
@@ -218,7 +218,7 @@ public class HotDeploy {
   private Closeable deployNewVerticle(CompileResult compileResult) {
     // deploy
     try {
-      logger.info("Starting deployment using classspath {}", compileResult.getClassPath());
+      logger.info("Starting deployment using classpath {}", compileResult.getClassPath());
       Closeable closeable = verticleDeployer.deploy(compileResult.getClassPath());
       refreshBrowser();
       return closeable;

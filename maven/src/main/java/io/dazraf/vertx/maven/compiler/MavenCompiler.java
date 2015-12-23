@@ -18,7 +18,7 @@ import java.util.regex.Pattern;
  */
 public class MavenCompiler implements Compiler {
 
-  private static final Logger LOGGER = LoggerFactory.getLogger(Compiler.class);
+  private static final Logger LOGGER = LoggerFactory.getLogger(MavenCompiler.class);
   private static final Pattern ERROR_PATTERN = Pattern.compile("\\[ERROR\\] [^:]+:\\[\\d+,\\d+\\].*");
   private static final Pattern DEPENDENCY_RESOLUTION_PATTERN = Pattern.compile("^\\[INFO\\].*:compile:(.*)$");
   private static final List<String> GOALS = Collections.singletonList("dependency:resolve compile");
@@ -62,14 +62,11 @@ public class MavenCompiler implements Compiler {
   }
 
   private InvocationRequest setupInvocationRequest(File buildFile, List<String> classPath, Set<String> messages) {
-    InvocationRequest request = new DefaultInvocationRequest();
-    request.setPomFile(buildFile);
-
-    request.setOutputHandler(msg -> collectResults(msg, messages, classPath));
-
-    request.setGoals(GOALS);
-    request.setProperties(compilerProperties);
-    return request;
+    return new DefaultInvocationRequest()
+      .setPomFile(buildFile)
+      .setOutputHandler(msg -> collectResults(msg, messages, classPath))
+      .setGoals(GOALS)
+      .setProperties(compilerProperties);
   }
 
   private void collectResults(String msg, Set<String> messages, List<String> classPath) {

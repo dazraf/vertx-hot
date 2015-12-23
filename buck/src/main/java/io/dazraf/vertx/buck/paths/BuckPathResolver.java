@@ -34,8 +34,8 @@ public class BuckPathResolver extends AbstractPathResolver {
   @Override
   protected Stream<Path> getCompilableFilePaths() {
     return of(
-            parameters.getCompileSourcePaths().stream(),
-            getBuildableResources()
+      parameters.getCompileSourcePaths().stream(),
+      getBuildableResources()
     ).flatMap(identity()).map(Paths::get);
   }
 
