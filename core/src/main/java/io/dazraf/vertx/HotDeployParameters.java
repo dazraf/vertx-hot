@@ -23,7 +23,7 @@ public class HotDeployParameters {
   private List<String> resourcePaths = new ArrayList<>();
   private List<String> buildOutputDirectories = new ArrayList<>();
   private Optional<List<ExtraPath>> extraPaths = Optional.empty();
-  private Optional<Awaitable> shutdownCondition;
+  private Optional<Awaitable> shutdownCondition = Optional.empty();
 
   public HotDeployParameters withVerticleReference(String verticleReference) {
     this.verticleReference = verticleReference;
