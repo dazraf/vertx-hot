@@ -20,12 +20,10 @@ import static java.util.Arrays.asList;
 import static java.util.stream.Stream.of;
 
 /**
- * Run with the working directory as the target build module,
- * i.e. example-buck-web.
+ * Runs the example-buck-web project in hot-deploy mode.
  *
- * This separation clearly splits Maven and Buck modules, and
- * minimises the number of libraries that have to be checked-in
- * to source control.
+ * The project is built using Buck, with third-party libraries dynamically
+ * retrieved from Maven central using Buck's remote_file support.
  *
  */
 public class RunWeb {
@@ -33,6 +31,7 @@ public class RunWeb {
   public static void main(String [] args) throws Exception {
     BuckHotDeployBuilder.create()
       .withBuildTarget("//:example-web")
+      .withProjectRootPath("../example-buck-web")
       .withFetchMode(AUTOMATIC)
       .withHotDeployConfig(new HotDeployParameters()
         .withVerticleReference("io.dazraf.example.buck.web.App")

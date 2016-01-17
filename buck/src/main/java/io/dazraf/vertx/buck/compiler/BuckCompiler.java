@@ -40,6 +40,7 @@ public class BuckCompiler implements Compiler {
     log.info("Running \"{}\"", String.join(" ", commands));
     Process process = new ProcessBuilder()
       .command(commands)
+      .directory(pathResolver.getPathToProjectRoot().toFile())
       .redirectOutput(ProcessBuilder.Redirect.INHERIT)
       .redirectError(ProcessBuilder.Redirect.INHERIT)
       .start();

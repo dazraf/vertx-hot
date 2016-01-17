@@ -6,29 +6,41 @@ import io.dazraf.vertx.HotDeployParameters;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static java.util.function.Function.identity;
+import static java.util.stream.Collectors.toList;
 import static java.util.stream.Stream.of;
 
 public class BuckPathResolver extends AbstractPathResolver {
 
-  public BuckPathResolver(HotDeployParameters parameters) {
+  private final Optional<String> projectRootPath;
+
+  public BuckPathResolver(HotDeployParameters parameters, Optional<String> projectRootPath) {
     super(parameters);
+    this.projectRootPath = projectRootPath;
   }
 
   @Override
   public List<String> getClasspath() {
-    List<String> classpath = new ArrayList<>();
-    classpath.addAll(parameters.getResourcePaths());
-    classpath.addAll(parameters.getBuildOutputDirectories());
-    return classpath;
+    return of(
+      parameters.getResourcePaths().stream(),
+      parameters.getBuildOutputDirectories().stream()
+    )
+      .flatMap(identity())
+      .map(Paths::get)
+      .map(this::resolveRelativePathToProjectRoot)
+      .map(Path::toString)
+      .collect(toList());
   }
 
   @Override
-  protected Path getPathToProjectRoot() {
-    return null;
+  public Path getPathToProjectRoot() {
+    return Paths.get(projectRootPath.orElse("."));
   }
 
   @Override
@@ -36,7 +48,10 @@ public class BuckPathResolver extends AbstractPathResolver {
     return of(
       parameters.getCompileSourcePaths().stream(),
       getBuildableResources()
-    ).flatMap(identity()).map(Paths::get);
+    )
+      .flatMap(identity())
+      .map(Paths::get)
+      .map(this::resolveRelativePathToProjectRoot);
   }
 
 }

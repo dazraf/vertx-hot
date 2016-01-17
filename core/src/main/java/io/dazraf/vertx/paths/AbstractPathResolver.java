@@ -37,7 +37,8 @@ public abstract class AbstractPathResolver implements PathResolver {
   @Override
   public List<Path> pathsThatRequireCompile() {
     return pathsForCompile.orElseGet(() -> // compute and cache the following
-      concat(getCompilableFilePaths(), getExtraCompilePaths()).collect(Collectors.toList()) // otherwise return empty list
+      concat(getCompilableFilePaths(), getExtraCompilePaths())
+        .collect(Collectors.toList()) // otherwise return empty list
     );
   }
 
@@ -124,7 +125,7 @@ public abstract class AbstractPathResolver implements PathResolver {
       .map(Stream::of).orElse(empty());
   }
 
-  private Path resolveRelativePathToProjectRoot(Path path) {
+  protected Path resolveRelativePathToProjectRoot(Path path) {
     if (path.isAbsolute()) {
       return path;
     } else {
