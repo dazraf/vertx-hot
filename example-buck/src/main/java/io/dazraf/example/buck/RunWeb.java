@@ -38,8 +38,7 @@ public class RunWeb {
         .withBuildOutputDirectories(asList("buck-out/gen/example-web.jar"))
         .withCompileSourcePaths(asList("java"))
         .withExtraPaths(asList(
-          new ExtraPath().withPath("res").withAction(Recompile),
-          new ExtraPath().withPath("./BUCK").withAction(Recompile)
+          new ExtraPath().withPath("res").withAction(Recompile)
         ))
         .withNotificationPort(9588)
       )

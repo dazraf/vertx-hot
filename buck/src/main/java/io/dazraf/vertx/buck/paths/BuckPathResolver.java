@@ -47,11 +47,16 @@ public class BuckPathResolver extends AbstractPathResolver {
   protected Stream<Path> getCompilableFilePaths() {
     return of(
       parameters.getCompileSourcePaths().stream(),
-      getBuildableResources()
+      getBuildableResources(),
+      of(getBuckFilePath().toString())
     )
       .flatMap(identity())
       .map(Paths::get)
       .map(this::resolveRelativePathToProjectRoot);
+  }
+
+  private Path getBuckFilePath() {
+    return getPathToProjectRoot().resolve("BUCK");
   }
 
 }
