@@ -12,12 +12,26 @@ public class BuckHotDeployBuilder {
   }
 
   private String buildTarget;
+  private FetchMode fetchMode = FetchMode.MANUAL;
+
   private HotDeployParameters parameters;
+
+  public enum FetchMode {
+    MANUAL,
+    AUTOMATIC
+  }
 
   private BuckHotDeployBuilder() {}
 
   public BuckHotDeployBuilder withBuildTarget(String buildTarget) {
     this.buildTarget = buildTarget;
+    return this;
+  }
+
+  public BuckHotDeployBuilder withFetchMode(FetchMode fetchMode) {
+    if (fetchMode != null) {
+      this.fetchMode = fetchMode;
+    }
     return this;
   }
 
@@ -28,7 +42,7 @@ public class BuckHotDeployBuilder {
 
   public HotDeploy build() {
     BuckPathResolver pathResolver = new BuckPathResolver(parameters);
-    BuckCompiler compiler = new BuckCompiler(buildTarget, pathResolver);
+    BuckCompiler compiler = new BuckCompiler(buildTarget, fetchMode, pathResolver);
     GenericVerticleDeployer verticleDeployer = new GenericVerticleDeployer(parameters);
     return new HotDeploy(compiler, verticleDeployer, pathResolver, parameters.getShutdownCondition());
   }

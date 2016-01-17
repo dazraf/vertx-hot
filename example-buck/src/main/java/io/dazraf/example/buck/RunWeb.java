@@ -14,6 +14,7 @@ import java.util.List;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import static io.dazraf.vertx.buck.BuckHotDeployBuilder.FetchMode.AUTOMATIC;
 import static io.dazraf.vertx.paths.ExtraPath.VertxHotAction.Recompile;
 import static java.util.Arrays.asList;
 import static java.util.stream.Stream.of;
@@ -32,6 +33,7 @@ public class RunWeb {
   public static void main(String [] args) throws Exception {
     BuckHotDeployBuilder.create()
       .withBuildTarget("//:example-web")
+      .withFetchMode(AUTOMATIC)
       .withHotDeployConfig(new HotDeployParameters()
         .withVerticleReference("io.dazraf.example.buck.web.App")
         .withBuildOutputDirectories(asList("buck-out/gen/example-web.jar"))
