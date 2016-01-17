@@ -1,0 +1,16 @@
+[alias]
+  example-buck-web = //:example-web
+[intellij]
+  jdk_name = 1.8
+  jdk_type = JavaSDK
+  language_level = JDK_1_8
+[java]
+  src_roots = java, res
+  source_level = 8
+  target_level = 8
+[maven_repositories]
+  central = https://repo1.maven.org/maven2
+  m2 = ~/.m2/repository
+[project]
+  ide = intellij
+  ignore = .git,.idea,.vertx

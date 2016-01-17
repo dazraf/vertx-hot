@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Buck Example</title>
+    <script src="http://localhost:8080/third-party/jquery/jquery-2.1.4.min.js"></script>
+    <script src="http://localhost:8080/third-party/bootstrap/bootstrap.min.js"></script>
+    <script>
+        $.get( "http://localhost:8080/api/article", function( data ) {
+          $("#headline").text(data.headline);
+          $("#article").text(data.article);
+        }, "json");
+    </script>
+    <link rel="stylesheet" href="http://localhost:8080/main.css">
+    <link rel="stylesheet" href="http://localhost:8080/third-party/bootstrap/css/bootstrap.min.css">
+</head>
+<body>
+    <button id="nextBtn" class="btn btn-default" onclick="location.reload()">
+        <span class="glyphicon glyphicon-arrow-right"></span>
+        Next
+    </button>
+    <h1 id="headline"></h1>
+    <h2 id="article"></h2>
+</body>
+</html>
