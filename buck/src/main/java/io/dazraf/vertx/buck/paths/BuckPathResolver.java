@@ -33,7 +33,7 @@ public class BuckPathResolver extends AbstractPathResolver {
     )
       .flatMap(identity())
       .map(Paths::get)
-      .map(this::resolveRelativePathToProjectRoot)
+      .map(p -> { return resolveRelativePathToProjectRoot(p); } )
       .map(Path::toString)
       .collect(toList());
   }

@@ -1,0 +1,23 @@
+java_library(
+  name = 'test-project-lib',
+  srcs = glob(['java/**/*.java']),
+  deps = [
+    ':slf4j-api',
+    ':vertx-core'
+  ]
+)
+
+java_binary(
+  name = 'test-project',
+  deps = [ ':test-project-lib' ]
+)
+
+prebuilt_jar(
+  name = 'slf4j-api',
+  binary_jar = 'lib/slf4j-api.jar'
+)
+
+prebuilt_jar(
+  name = 'vertx-core',
+  binary_jar = 'lib/vertx-core.jar'
+)
