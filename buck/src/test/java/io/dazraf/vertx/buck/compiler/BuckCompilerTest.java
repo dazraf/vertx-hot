@@ -4,6 +4,7 @@ import io.dazraf.vertx.HotDeployParameters;
 import io.dazraf.vertx.buck.BuckHotDeployBuilder;
 import io.dazraf.vertx.buck.paths.BuckPathResolver;
 import io.dazraf.vertx.compiler.CompileResult;
+import org.junit.Assume;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -13,6 +14,7 @@ import java.util.concurrent.TimeUnit;
 import static java.util.Arrays.asList;
 import static java.util.Optional.ofNullable;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assume.assumeNoException;
 import static org.junit.Assume.assumeTrue;
 
 /**
@@ -27,16 +29,21 @@ import static org.junit.Assume.assumeTrue;
 public class BuckCompilerTest {
 
   @Before
-  public void proceedOnlyIfBuckBinaryExists() throws IOException, InterruptedException {
-    Process proc = new ProcessBuilder()
-      .command("buck", "--version")
-      .start();
-    // If buck is present, it will execute, report its version to stdout
-    // and return 0.
-    if (!proc.waitFor(30, TimeUnit.SECONDS)) {
-      proc.destroyForcibly();
+  public void proceedOnlyIfBuckBinaryExists() throws InterruptedException {
+    Process proc = null;
+    try {
+      proc = new ProcessBuilder()
+        .command("buck", "--version")
+        .start();
+      // If buck is present, it will execute, report its version to stdout
+      // and return 0.
+      if (!proc.waitFor(30, TimeUnit.SECONDS)) {
+        proc.destroyForcibly();
+      }
+      assumeTrue(!proc.isAlive() && proc.exitValue() == 0);
+    } catch (IOException e) {
+      assumeNoException(e);
     }
-    assumeTrue(!proc.isAlive() && proc.exitValue() == 0);
   }
 
   @Test
