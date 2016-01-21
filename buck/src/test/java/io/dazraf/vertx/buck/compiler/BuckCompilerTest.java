@@ -4,15 +4,14 @@ import io.dazraf.vertx.HotDeployParameters;
 import io.dazraf.vertx.buck.BuckHotDeployBuilder;
 import io.dazraf.vertx.buck.paths.BuckPathResolver;
 import io.dazraf.vertx.compiler.CompileResult;
-import org.junit.Assume;
 import org.junit.Before;
 import org.junit.Test;
 
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 
-import static java.util.Arrays.asList;
-import static java.util.Optional.ofNullable;
+import static java.util.Collections.singletonList;
+import static java.util.Optional.of;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assume.assumeNoException;
 import static org.junit.Assume.assumeTrue;
@@ -30,9 +29,8 @@ public class BuckCompilerTest {
 
   @Before
   public void proceedOnlyIfBuckBinaryExists() throws InterruptedException {
-    Process proc = null;
     try {
-      proc = new ProcessBuilder()
+      Process proc = new ProcessBuilder()
         .command("buck", "--version")
         .start();
       // If buck is present, it will execute, report its version to stdout
@@ -51,9 +49,9 @@ public class BuckCompilerTest {
     final BuckPathResolver pathResolver = new BuckPathResolver(
       new HotDeployParameters()
         .withVerticleReference("io.dazraf.vertx.buck.test.App")
-        .withBuildOutputDirectories(asList("buck-out/gen/test-project.jar"))
-        .withCompileSourcePaths(asList("java")),
-      ofNullable("target/test-classes/project")
+        .withBuildOutputDirectories(singletonList("buck-out/gen/test-project.jar"))
+        .withCompileSourcePaths(singletonList("java")),
+      of("target/test-classes/project")
     );
     final BuckCompiler compiler = new BuckCompiler(
       "//:test-project",
