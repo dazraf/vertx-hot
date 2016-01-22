@@ -33,7 +33,7 @@ public class BuckPathResolver extends AbstractPathResolver {
     )
       .flatMap(identity())
       .map(Paths::get)
-      .map(p -> { return resolveRelativePathToProjectRoot(p); } )
+      .map(p -> resolveRelativePathToProjectRoot(p))
       .map(Path::toString)
       .collect(toList());
   }
@@ -48,15 +48,11 @@ public class BuckPathResolver extends AbstractPathResolver {
     return of(
       parameters.getCompileSourcePaths().stream(),
       getBuildableResources(),
-      of(getBuckFilePath().toString())
+      of("BUCK")
     )
       .flatMap(identity())
       .map(Paths::get)
       .map(this::resolveRelativePathToProjectRoot);
-  }
-
-  private Path getBuckFilePath() {
-    return getPathToProjectRoot().resolve("BUCK");
   }
 
 }
