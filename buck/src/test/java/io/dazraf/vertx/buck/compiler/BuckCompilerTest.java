@@ -20,7 +20,8 @@ public class BuckCompilerTest extends DependentOnBuckBinary {
         .withVerticleReference("io.dazraf.vertx.buck.test.App")
         .withBuildOutputDirectories(singletonList("buck-out/gen/test-project.jar"))
         .withCompileSourcePaths(singletonList("java")),
-      of("target/test-classes/project")
+      of("target/test-classes/project"),
+      "//:test-project"
     );
     final BuckCompiler compiler = new BuckCompiler(
       "//:test-project",

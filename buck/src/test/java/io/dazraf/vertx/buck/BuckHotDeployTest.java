@@ -30,7 +30,6 @@ public class BuckHotDeployTest extends DependentOnBuckBinary {
       .withProjectRootPath("target/test-classes/project")
       .withHotDeployConfig(new HotDeployParameters()
         .withVerticleReference("io.dazraf.vertx.buck.test.App")
-        .withBuildOutputDirectories(singletonList("buck-out/gen/test-project.jar"))
         .withCompileSourcePaths(singletonList("java"))
         .withShutdownCondition(() -> awaitLatch(latch))
       )
