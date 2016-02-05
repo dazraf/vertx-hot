@@ -41,9 +41,10 @@ public class MavenCompiler implements Compiler {
   @Override
   public CompileResult compile() throws CompilerException, MavenInvocationException {
     Set<String> messages = new HashSet<>();
+    List<String> classpath = pathResolver.getClasspath();
     InvocationRequest request = setupInvocationRequest(pathResolver.getPomFile(),
-            pathResolver.getClasspath(), messages);
-    return execute(request, messages, pathResolver.getClasspath());
+            classpath, messages);
+    return execute(request, messages, classpath);
   }
 
   private CompileResult execute(InvocationRequest request, Set<String> messages, List<String> classPath) throws CompilerException, MavenInvocationException  {
