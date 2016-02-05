@@ -174,7 +174,7 @@ System.setProperty("vertx.logger-delegate-factory-class-name", "io.vertx.core.lo
 Then configure your hot deployment:
 
 ```
-HotDeploy hd = BuckHotDeployBuilder.create()
+BuckHotDeployBuilder.create()
   .withBuildTarget("//my-service:bin")
   .withProjectRootPath(".")
   .withHotDeployConfig(new HotDeployParameters()
