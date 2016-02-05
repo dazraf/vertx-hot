@@ -139,6 +139,17 @@ To run either:
 
 ## Buck Instructions
 
+[Buck](https://buckbuild.com/) is an efficient build system capable of identifying and recompiling only what it absolutely has to.
+
+Before you rush off to switch from Maven/Gradle to Buck, it's important to bear in mind that Buck is not (and doesn't intend to be)
+as featureful as Maven. If you're used to transitive dependency retrieval, haven't heard of the concept of checking-in dependencies,
+leverage multitudinous Maven plugins, have developed custom Maven plugins, regularly rely on your build system's strong IDE integration,
+or just need things to work "out-of-the-box", then Buck might not be for you. However, if you are looking for outrageously fast builds,
+are prepared to rethink your project structure, and if the concepts behind Buck resonate for you, then you may want to give it a try.
+
+The Buck support in vertx-hot is presently both limited and inefficient, but is hopefully sufficient to be of use to
+simple projects. As always, feature and pull requests are most welcome.
+
 ### Step 1: Get the jar
 
 The vertx-hot-buck build produces a fat-jar, to make inclusion from Buck projects fairly simple.
