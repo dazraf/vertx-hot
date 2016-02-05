@@ -46,7 +46,12 @@ public class GenericVerticleDeployer implements VerticleDeployer {
       this.vertx = new VertxWrapper(new VertxOptions().setBlockedThreadCheckInterval(3_600_000));
       vertx.deployVerticle(new WebNotificationService(hotDeployParameters.getNotificationPort()));
     } else {
-      this.vertx = Vertx.vertx();
+      try {
+        this.vertx = Vertx.vertx();
+      } catch (Throwable t) {
+        logger.error("Failed to start Vertx", t);
+        throw t;
+      }
     }
     this.verticleReference = hotDeployParameters.getVerticleReference();
     this.vertxConfigFilePath = hotDeployParameters.getConfigFilePath();
