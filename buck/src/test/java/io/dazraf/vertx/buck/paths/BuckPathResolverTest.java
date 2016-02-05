@@ -27,6 +27,14 @@ public class BuckPathResolverTest {
   }
 
   @Test
+  public void defaultDeepConfigurationAssumesGeneratedJar() throws Exception {
+    givenDeepConfiguration();
+    expectTheClasspathToBe(
+      String.format("%s/buck-out/gen/foo/bar/bin.jar", PROJECT_ROOT)
+    );
+  }
+
+  @Test
   public void customBuildDirectoryConfigurationMakesNoAssumptions() throws Exception {
     givenConfigurationWithBuildOutputDirectories("foo/bar.jar");
     expectTheClasspathToBe(
@@ -40,6 +48,15 @@ public class BuckPathResolverTest {
       .withCompileSourcePaths(singletonList("src")),
       of(PROJECT_ROOT),
       "//:" + BUILD_TARGET_NAME
+    );
+  }
+
+  private void givenDeepConfiguration() {
+    resolver = new BuckPathResolver(new HotDeployParameters()
+      .withVerticleReference(VERTICLE)
+      .withCompileSourcePaths(singletonList("src")),
+      of(PROJECT_ROOT),
+      "//foo/bar:bin"
     );
   }
 

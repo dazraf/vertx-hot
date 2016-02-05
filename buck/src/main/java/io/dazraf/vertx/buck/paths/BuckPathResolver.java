@@ -30,7 +30,7 @@ public class BuckPathResolver extends AbstractPathResolver {
     return of(
       parameters.getResourcePaths().stream(),
       parameters.getBuildOutputDirectories().isEmpty() ?
-        of("buck-out/gen/" + transformBuildTargetToArtifactName(buildTarget)) :
+        of(transformBuildTargetToGeneratedJarPath(buildTarget)) :
         parameters.getBuildOutputDirectories().stream()
     )
       .flatMap(identity())
@@ -58,14 +58,26 @@ public class BuckPathResolver extends AbstractPathResolver {
   }
 
   /**
-   * Given a java_binary build target, return the expected binary artifact name
+   * Given a java_binary build target, return the expected project-relative
+   * path to the generated jarfile
    *
    * @param buildTarget A Buck build target, such as :app, or //foo/bar/lorem:ipsum. Note
    *          that this should be of java_binary type.
-   * @return artifactName The expected build artifact name, such as app or ipsum.
+   * @return The expected path, such as buck-out/gen/app.jar or
+   *          buck-out/gen/foo/bar/lorem/ipsum.jar
    */
-  private String transformBuildTargetToArtifactName(String buildTarget) {
-    return buildTarget.substring(buildTarget.lastIndexOf(":") + 1) + ".jar";
+  private String transformBuildTargetToGeneratedJarPath(String buildTarget) {
+    StringBuilder sb = new StringBuilder("buck-out/gen/");
+    for (String pathComponent: buildTarget.split("/")) {
+      if (pathComponent.length() > 0) {
+        String[] targetComponents = pathComponent.split(":");
+        sb.append(targetComponents[0]).append("/");
+        if (targetComponents.length > 1) {
+          sb.append(targetComponents[1]).append(".jar");
+        }
+      }
+    }
+    return sb.toString();
   }
 
 }
