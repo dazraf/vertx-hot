@@ -1,0 +1,27 @@
+body {
+    font-family: sans-serif;
+}
+#headline {
+    background-color: grey;
+    color: white;
+    font-size: 6em;
+    line-height: 60%;
+    margin: 0em;
+    padding: 40px 20px 0px 20px;
+}
+#article {
+    color: grey;
+    font-size: 4em;
+    line-height: 60%;
+    margin: 0em;
+    padding: 0px 20px;
+    text-align: right;
+    width: 100%;
+}
+#nextBtn {
+    margin: 20px;
+    float: right;
+}
+span.glyphicon {
+    margin-right: 10px;
+}

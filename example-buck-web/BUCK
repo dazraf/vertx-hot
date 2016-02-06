@@ -1,0 +1,56 @@
+java_library(
+  name = 'app',
+  srcs = glob(['java/**/*.java']),
+  resources = glob(['res/**/']),
+  deps = [
+    ':slf4j-api',
+    ':vertx-core',
+    ':vertx-web'
+  ],
+  visibility = ['PUBLIC']
+)
+
+prebuilt_jar(
+  name = 'slf4j-api',
+  binary_jar = ':slf4j-api-bin'
+)
+
+remote_file(
+  name = 'slf4j-api-bin',
+  url = 'mvn:org.slf4j:slf4j-api:jar:1.7.13',
+  sha1 = '7fcf30c25b8f4a9379b9dad0d3f487b25272c026'
+)
+
+prebuilt_jar(
+  name = 'vertx-core',
+  binary_jar = ':vertx-core-bin'
+)
+
+remote_file(
+  name = 'vertx-core-bin',
+  url = 'mvn:io.vertx:vertx-core:jar:3.2.0',
+  sha1 = 'a3c6fedd64286109937c01948cf0464b4e84e47a'
+)
+
+prebuilt_jar(
+  name = 'vertx-web',
+  binary_jar = ':vertx-web-bin'
+)
+
+remote_file(
+  name = 'vertx-web-bin',
+  url = 'mvn:io.vertx:vertx-web:jar:3.2.0',
+  sha1 = 'fa823e75e18c53df6d9377f320bb87a7f0e3cf55'
+)
+
+java_binary(
+  name = 'example-web',
+  deps = [ ':app' ]
+)
+
+project_config(
+  src_target = ':example-web',
+  src_roots = [ 'java' ],
+  test_roots = [ ],
+  resource_roots = [ 'res' ]
+)
