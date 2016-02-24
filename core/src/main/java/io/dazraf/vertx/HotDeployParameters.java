@@ -5,16 +5,14 @@ import io.dazraf.vertx.paths.ExtraPath;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
+import static java.util.Arrays.asList;
 import static java.util.Collections.emptyList;
 
 public class HotDeployParameters {
 
-  private String verticleReference;
+  private Set<String> verticleReferences = new HashSet<>();
   private Optional<String> configFilePath = Optional.empty();
   private boolean liveHttpReload;
   private boolean buildResources;
@@ -26,7 +24,15 @@ public class HotDeployParameters {
   private Optional<Awaitable> shutdownCondition = Optional.empty();
 
   public HotDeployParameters withVerticleReference(String verticleReference) {
-    this.verticleReference = verticleReference;
+    return withVerticleReferences(verticleReference);
+  }
+
+  public HotDeployParameters withVerticleReferences(String... verticleReferences) {
+    return withVerticleReferences(asList(verticleReferences));
+  }
+
+  public HotDeployParameters withVerticleReferences(Collection<String> verticleReferences) {
+    verticleReferences.stream().forEach(this.verticleReferences::add);
     return this;
   }
 
@@ -74,16 +80,16 @@ public class HotDeployParameters {
    * Specify a custom HotDeploy shutdown condition. By default, HotDeploy waits for
    * the Enter key.
    *
-   * @param shutdownCondition
-   * @return
+   * @param shutdownCondition an implementation should return when HotDeploy should shutdown
+   * @return HotDeployParameters
    */
   public HotDeployParameters withShutdownCondition(Awaitable shutdownCondition) {
     this.shutdownCondition = Optional.ofNullable(shutdownCondition);
     return this;
   }
 
-  public String getVerticleReference() {
-    return verticleReference;
+  public Set<String> getVerticleReferences() {
+    return verticleReferences;
   }
 
   public boolean isLiveHttpReload() {
@@ -123,7 +129,7 @@ public class HotDeployParameters {
   @Override
   public String toString() {
     JsonObject result = new JsonObject();
-    result.put("verticleReference", verticleReference)
+    result.put("verticleReferences", verticleReferences)
             .put("configFilePath", configFilePath.orElse("undefined"))
             .put("liveHttpReload", liveHttpReload)
             .put("buildResources", buildResources)

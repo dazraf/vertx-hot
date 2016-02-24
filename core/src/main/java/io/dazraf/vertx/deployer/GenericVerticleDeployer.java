@@ -10,6 +10,7 @@ import io.vertx.core.impl.VertxWrapper;
 import io.vertx.core.json.JsonObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import rx.exceptions.Exceptions;
 import rx.functions.Action1;
 
 import java.io.Closeable;
@@ -19,18 +20,19 @@ import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
-import java.util.Scanner;
+import java.util.*;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.Collectors;
+
+import static io.dazraf.vertx.deployer.DeploymentResult.failure;
+import static io.dazraf.vertx.deployer.DeploymentResult.success;
 
 public class GenericVerticleDeployer implements VerticleDeployer {
   private static final Logger logger = LoggerFactory.getLogger(GenericVerticleDeployer.class);
   private final Vertx vertx;
-  private final String verticleReference;
+  private final Set<String> verticleReferences;
   private final Optional<String> vertxConfigFilePath;
   private final AtomicLong nextIsolationGroup = new AtomicLong(1);
 
@@ -42,25 +44,31 @@ public class GenericVerticleDeployer implements VerticleDeployer {
   }
 
   public GenericVerticleDeployer(HotDeployParameters hotDeployParameters) {
-    if (hotDeployParameters.isLiveHttpReload()) {
-      this.vertx = new VertxWrapper(new VertxOptions().setBlockedThreadCheckInterval(3_600_000));
-      vertx.deployVerticle(new WebNotificationService(hotDeployParameters.getNotificationPort()));
-    } else {
-      try {
-        this.vertx = Vertx.vertx();
-      } catch (Throwable t) {
-        logger.error("Failed to start Vertx", t);
-        throw t;
+    this(hotDeployParameters, Optional.empty());
+  }
+
+  GenericVerticleDeployer(HotDeployParameters hotDeployParameters, Optional<Vertx> vertx) {
+    this.vertx = vertx.orElseGet(() -> {
+      if (hotDeployParameters.isLiveHttpReload()) {
+        return new VertxWrapper(new VertxOptions().setBlockedThreadCheckInterval(3_600_000));
+      } else {
+        try {
+         return Vertx.vertx();
+        } catch (Throwable t) {
+          logger.error("Failed to start Vertx", t);
+          throw t;
+        }
       }
+    });
+    if (hotDeployParameters.isLiveHttpReload()) {
+      this.vertx.deployVerticle(new WebNotificationService(hotDeployParameters.getNotificationPort()));
     }
-    this.verticleReference = hotDeployParameters.getVerticleReference();
+    this.verticleReferences = hotDeployParameters.getVerticleReferences();
     this.vertxConfigFilePath = hotDeployParameters.getConfigFilePath();
   }
 
   public Action1<JsonObject> createStatusConsumer() {
-    return (status) -> {
-      vertx.eventBus().publish(WebNotificationService.TOPIC, status);
-    };
+    return (status) -> vertx.eventBus().publish(WebNotificationService.TOPIC, status);
   }
 
   public void close() {
@@ -80,11 +88,19 @@ public class GenericVerticleDeployer implements VerticleDeployer {
 
   public Closeable deploy(List<String> classPaths) throws Throwable {
     DeploymentOptions deploymentOptions = createIsolatingDeploymentOptions(classPaths, vertxConfigFilePath);
-    final String verticleId = deployVerticle(verticleReference, deploymentOptions);
-    return verticleId == null ? null : () -> {
+    final List<DeploymentResult> deploymentResults = verticleReferences.stream()
+      .map(vr -> deployVerticle(vr, deploymentOptions))
+      .collect(Collectors.toList());
+    logDeploymentReport(deploymentResults);
+    return () -> {
       try {
-        CountDownLatch closeLatch = new CountDownLatch(1);
-        vertx.undeploy(verticleId, ar -> closeLatch.countDown());
+        List<String> verticleIds = deploymentResults.stream()
+          .filter(DeploymentResult::isSuccess)
+          .map(result -> result.getVerticleId().get())
+          .collect(Collectors.toList());
+        CountDownLatch closeLatch = new CountDownLatch(verticleIds.size());
+        verticleIds.stream()
+          .forEach(id -> vertx.undeploy(id, ar -> closeLatch.countDown()));
         closeLatch.await();
       } catch (Exception e) {
         logger.error("on closing verticle", e);
@@ -92,7 +108,16 @@ public class GenericVerticleDeployer implements VerticleDeployer {
     };
   }
 
-  private String deployVerticle(String verticleReference, DeploymentOptions deploymentOptions) throws Throwable {
+  private void logDeploymentReport(List<DeploymentResult> deploymentResults) {
+    deploymentResults.stream()
+      .sorted((d1, d2) -> d1.isSuccess() && !d2.isSuccess() ?
+          1 : !d1.isSuccess() && d2.isSuccess() ?
+            -1 : 0)
+      .map(DeploymentResult::toString)
+      .forEach(logger::info);
+  }
+
+  private DeploymentResult deployVerticle(String verticleReference, DeploymentOptions deploymentOptions) {
     try {
       CountDownLatch latch = new CountDownLatch(1);
       AtomicReference<AsyncResult<String>> result = new AtomicReference<>();
@@ -100,17 +125,21 @@ public class GenericVerticleDeployer implements VerticleDeployer {
         result.set(ar);
         latch.countDown();
       });
-      latch.await();
-      if (result.get().failed()) {
-        throw result.get().cause();
+      try {
+        latch.await();
+      } catch (InterruptedException e) {
+        Exceptions.propagate(e);
       }
-      return result.get().result();
+      if (result.get().failed()) {
+        Exceptions.throwIfFatal(result.get().cause());
+        return failure(verticleReference, result.get().cause());
+      }
+      return success(verticleReference, result.get().result());
     } catch (Error err) {
       // Vertx throws a generic java.lang.Error on Verticle compilation failure
-      if (!(err instanceof VirtualMachineError)) {
-        logger.error("on compiling verticle {}", verticleReference, err);
-      }
-      throw err;
+      Exceptions.throwIfFatal(err);
+      logger.error("on compiling verticle {}", verticleReference, err);
+      return failure(verticleReference, err);
     }
   }
 
